@@ -1,0 +1,8 @@
+{
+  "runtimeOptions": {
+    "additionalProbingPaths": [
+      "D:\\MyData\\guozhao\\.dotnet\\store\\|arch|\\|tfm|",
+      "D:\\MyData\\guozhao\\.nuget\\packages"
+    ]
+  }
+}
