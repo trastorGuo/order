@@ -3,5 +3,7 @@
 ################################################################################
 
 /OrderApi/.vs
+/OrderApi/.vs/OrderApi
 /OrderApi/OrderApi/bin
 /OrderApi/OrderApi/obj
+/.vs
