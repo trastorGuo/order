@@ -27,6 +27,7 @@ namespace OrderApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
             services.AddMvc(options =>
             {
                 options.Filters.Add(typeof(WebApiResultMiddleware));
@@ -55,7 +56,7 @@ namespace OrderApi
             app.UseRouting();
 
             app.UseAuthorization();
-
+            app.UseCors("any");
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
