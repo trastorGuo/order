@@ -153,9 +153,9 @@
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   name: "Order",
-
   data: () => ({
     SHOP_NAME: "周洛御景山庄",
     tab: null,
@@ -261,6 +261,11 @@ export default {
         });
       });
     },
+  },
+  mounted() {
+    axios
+      .get("http://localhost:59703/order/food/Get")
+      .then((response) => console.log(response));
   },
   methods: {
     showCar: function () {
