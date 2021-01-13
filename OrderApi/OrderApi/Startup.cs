@@ -60,6 +60,11 @@ namespace OrderApi
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("Security:Tokens:Key"))
                     };
                 });
+
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("k1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "swg", Version = "k1" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -68,6 +73,11 @@ namespace OrderApi
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseSwagger();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/k1/swagger.json", "swg k1");
+                });
             }
 
             app.UseRouting();
@@ -78,6 +88,8 @@ namespace OrderApi
             {
                 endpoints.MapControllers();
             });
+
+            
         }
     }
 }

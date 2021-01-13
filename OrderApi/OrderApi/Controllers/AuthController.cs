@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using OrderApi.Domains;
+using OrderApi.MsgCommon;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -10,34 +12,20 @@ using System.Threading.Tasks;
 
 namespace OrderApi.Controllers
 {
-    [ApiController]
-    [Route("common/[controller]/[action]")]
+    [WebApi]
     public class AuthController : Controller
     {
         [HttpGet("name={name}&pwd={pwd}")]
         public string GetToken(string name, string pwd)
         {
             //校验用户
-
-            //返回Token
-            return BuildToken(name);
-        }
-
-
-        private string BuildToken(string userId)
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes("Security:Tokens:Key");
-            var tokenDescriptor = new SecurityTokenDescriptor
+            if(!LoginDomain.Current.CheckPassword(name, pwd))
             {
-                Issuer = "Security:Tokens:Issuer",
-                Audience = "Security:Tokens:Audience",
-                Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, userId) }),
-                Expires = DateTime.UtcNow.AddDays(7),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
-            };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+                throw new Exception("当前用户名或密码不正确！");
+            }
+            //返回Token
+            return AuthCommon.Current.BuildToken(name);
         }
+
     }
 }

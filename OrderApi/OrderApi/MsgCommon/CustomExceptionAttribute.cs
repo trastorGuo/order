@@ -34,7 +34,7 @@ namespace MsgCommon
             message.content = exception.InnerException != null ?
                 exception.InnerException.Message :
                 exception.Message;
-            data = exception.Message;
+            data = null;
             //ReturnStatus = ReturnStatus.Error;
         }
     }
