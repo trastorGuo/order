@@ -12,7 +12,7 @@ namespace OrderApi.Controllers
 {
 
     [WebApi("api/[controller]/[action]")]
-    public class UserController : Controller
+    public class UserController : BaseController
     {
         
         /// <summary>
@@ -21,7 +21,7 @@ namespace OrderApi.Controllers
         /// <param name="name"></param>
         /// <param name="pwd"></param>
         /// <returns></returns>
-        [HttpGet("name={name}&pwd={pwd}")]
+        [HttpGet]
         public string Login(string name, string pwd)
         {
             //校验用户
@@ -29,20 +29,33 @@ namespace OrderApi.Controllers
             {
                 throw new Exception("当前用户名或密码不正确！");
             }
+            var shopInfo = LoginDomain.Current.ShopInfo(name) as SHOP;
             //返回Token
-            return AuthCommon.Current.BuildToken(name);
+            return AuthDomain.Current.BuildToken(name, shopInfo.IsAdmin);
         }
 
 
         [HttpPost]
-        public void AddShop([FromBody] Object value)
+        public void AddShop(Object value)
         {
             using (var db = new OrderDB())
             {
                 db.BeginTransaction();
                 try
                 {
+                    if (!IS_ADMIN)
+                    {
+                        throw new Exception("当前用户无管理员权限!");
+                    }
                     var m = JsonConvert.DeserializeObject<SHOP>(value.ToString());
+                    if (LoginDomain.Current.UserIsExsist(m.NAME))
+                    {
+                        throw new Exception("名称已存在！");
+                    }
+                    m.ID = Guid.NewGuid().ToString("N").ToUpper();
+                    m.UserCreated = ACCOUNT;
+                    m.DatetimeCreated = DateTime.Now;
+                    m.STATE = 'A';
                     db.Insert(m);
                     db.CommitTransaction();
                 }
@@ -56,7 +69,8 @@ namespace OrderApi.Controllers
         }
 
         [HttpPost]
-        public void EditShop([FromBody] Object value)
+        [Auth]
+        public void EditShop(Object value)
         {
             using (var db = new OrderDB())
             {
@@ -76,22 +90,11 @@ namespace OrderApi.Controllers
 
         }
 
-        [HttpGet("name={name}")]
-        public object ShopInfo(string name)
+        [HttpGet]
+        [Auth]
+        public object ShopInfo()
         {
-            using (var db = new OrderDB())
-            {
-                var infos = from p in db.Shops
-                           where p.NAME.Contains(name)
-                           select p;
-                var info = infos.FirstOrDefault();
-                if(info is null)
-                {
-                    throw new Exception("当前店铺不存在！");
-                }
-                return info;
-            }
-
+            return LoginDomain.Current.ShopInfo(ACCOUNT);
         }
     }
 }

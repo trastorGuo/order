@@ -13,18 +13,19 @@ using System.Threading.Tasks;
 namespace OrderApi.Controllers
 {
     [WebApi]
-    public class AuthController : Controller
+    public class AuthController : BaseController
     {
-        [HttpGet("name={name}&pwd={pwd}")]
+        [HttpGet]
         public string GetToken(string name, string pwd)
         {
             //校验用户
-            if(!LoginDomain.Current.CheckPassword(name, pwd))
+            if (!LoginDomain.Current.CheckPassword(name, pwd))
             {
                 throw new Exception("当前用户名或密码不正确！");
             }
+            var shopInfo = LoginDomain.Current.ShopInfo(name);
             //返回Token
-            return AuthCommon.Current.BuildToken(name);
+            return AuthDomain.Current.BuildToken(name, shopInfo.IsAdmin);
         }
 
     }

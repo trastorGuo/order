@@ -13,8 +13,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using MsgCommon;
 using Newtonsoft.Json.Serialization;
+using OrderApi.MsgCommon;
 
 namespace OrderApi
 {
@@ -36,7 +38,9 @@ namespace OrderApi
                 options.Filters.Add(typeof(WebApiResultMiddleware));
                 options.RespectBrowserAcceptHeader = true;
                 options.Filters.Add(typeof(CustomExceptionAttribute));
+                options.Filters.Add<TokenFilter>();
             });
+
 
             DataConnection.DefaultSettings = new Linq2dbSettings(Configuration);
             services.AddControllers();
@@ -59,11 +63,44 @@ namespace OrderApi
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("Security:Tokens:Key"))
                     };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var token = context.Request.Headers["Authorization"];
+                            context.Token = token.FirstOrDefault();
+                            return Task.CompletedTask;
+                        }
+                    };
                 });
 
             services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc("k1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "swg", Version = "k1" });
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                {
+                    Description = "在下框中输入请求头中需要添加Jwt授权Token：Bearer Token",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    BearerFormat = "JWT",
+                    Scheme = "Bearer"
+                });
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                            new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "Bearer"
+                                }
+                            },
+                            new string[] {}
+
+                    }
+                });
             });
         }
 
@@ -89,7 +126,7 @@ namespace OrderApi
                 endpoints.MapControllers();
             });
 
-            
+
         }
     }
 }

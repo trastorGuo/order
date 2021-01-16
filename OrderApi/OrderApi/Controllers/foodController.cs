@@ -11,7 +11,7 @@ namespace OrderApi.Controllers
 {
     [WebApi("order/[controller]/[action]")]
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public class FoodController : ControllerBase
+    public class FoodController : BaseController
     {
         [HttpGet]
         [Auth]

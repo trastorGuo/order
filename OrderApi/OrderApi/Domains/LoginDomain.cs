@@ -28,5 +28,33 @@ namespace OrderApi.Domains
                 return isExsit.Count() > 0;
             }
         }
+
+        public SHOP ShopInfo(string account)
+        {
+            using (var db = new OrderDB())
+            {
+                var infos = from p in db.Shops
+                            where p.ACCOUNT.Contains(account)
+                            select p;
+                var info = infos.FirstOrDefault();
+                if (info is null)
+                {
+                    throw new Exception("当前店铺不存在！");
+                }
+                return info;
+            }
+
+        }
+
+        public bool UserIsExsist(string name)
+        {
+            using (var db = new OrderDB())
+            {
+                var isExsit = from p in db.Shops
+                              where p.ACCOUNT == name
+                              select p;
+                return isExsit.Count() > 0;
+            }
+        }
     }
 }
