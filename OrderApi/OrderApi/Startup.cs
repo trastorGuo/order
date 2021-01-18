@@ -97,7 +97,7 @@ namespace OrderApi
                                     Id = "Bearer"
                                 }
                             },
-                            new string[] {}
+                            Array.Empty<string>()
 
                     }
                 });
@@ -110,12 +110,13 @@ namespace OrderApi
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/k1/swagger.json", "swg k1");
-                });
+                
             }
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/k1/swagger.json", "swg k1");
+            });
 
             app.UseRouting();
 
