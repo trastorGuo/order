@@ -37,3 +37,18 @@
 }
 ````
 
+### /api/Product/AddType
+
+````json
+{
+    "ICON": "",
+    "TYPE_NAME": ""
+}
+````
+
+### /api/Product/EditProduct
+
+```` json
+
+````
+

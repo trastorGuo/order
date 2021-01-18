@@ -14,7 +14,7 @@ namespace OrderApi.Domains
     {
         private static AuthDomain _current;
         public static AuthDomain Current = _current ?? new AuthDomain();
-        public string BuildToken(string userId, string isAdmin)
+        public string BuildToken(string userId, string isAdmin, string shopId)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes("Security:Tokens:Key");
@@ -25,7 +25,8 @@ namespace OrderApi.Domains
                 Subject = new ClaimsIdentity(new[] 
                 { 
                     new Claim(ClaimTypes.Name, userId),
-                    new Claim(ClaimTypes.Role, isAdmin)
+                    new Claim(ClaimTypes.Role, isAdmin),
+                    new Claim("SHOP_ID", shopId)
                 }),
                 Expires = DateTime.UtcNow.AddDays(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)

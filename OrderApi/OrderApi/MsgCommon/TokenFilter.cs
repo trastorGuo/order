@@ -24,6 +24,7 @@ namespace OrderApi.MsgCommon
             BaseController.ACCOUNT = tt[0].Value;
             BaseController.IS_ADMIN = tt[1].Value == "Y";
             BaseController.TOKEN = token;
+            BaseController.SHOP_ID = tt[2].Value;
         }
     }
 }

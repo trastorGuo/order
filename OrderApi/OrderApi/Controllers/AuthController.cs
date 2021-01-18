@@ -25,7 +25,7 @@ namespace OrderApi.Controllers
             }
             var shopInfo = LoginDomain.Current.ShopInfo(name);
             //返回Token
-            return AuthDomain.Current.BuildToken(name, shopInfo.IsAdmin);
+            return AuthDomain.Current.BuildToken(name, shopInfo.IsAdmin, shopInfo.ID);
         }
 
     }
