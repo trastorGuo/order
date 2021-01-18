@@ -22,7 +22,7 @@ namespace OrderApi.MsgCommon
             var tokenHandler = new JwtSecurityTokenHandler();
             var tt = tokenHandler.ReadJwtToken(token).Claims.ToList();
             BaseController.ACCOUNT = tt[0].Value;
-            BaseController.IS_ADMIN = tt[1].Value == "Y" ? true : false;
+            BaseController.IS_ADMIN = tt[1].Value == "Y";
             BaseController.TOKEN = token;
         }
     }

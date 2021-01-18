@@ -13,6 +13,7 @@ namespace OrderApi.Models
 
     public class ProductType
     {
+        public string TYPE_ID { get; set; }
         public string ICON { get; set; }
         public string TYPE_NAME { get; set; }
         public List<ProductFood> FOODS { get; set; }
@@ -20,6 +21,7 @@ namespace OrderApi.Models
 
     public class ProductFood
     {
+        public string FOOD_ID { get; set; }
         public string FOOD_TAG { get; set; }
         public string FOOD_NAME { get; set; }
         public string FOOD_IMG_ID { get; set; }
@@ -28,8 +30,15 @@ namespace OrderApi.Models
 
     public class ProductDetail
     {
+        public string DETAIL_ID { get; set; }
         public string DETAIL_NAME { get; set; }
         public string DETAIL_DESC { get; set; }
         public decimal DETAIL_PRICE { get; set; }
+        public List<ProductImage> Urls { get; set; }
+    }
+
+    public class ProductImage
+    {
+        public string URL { get; set; }
     }
 }
