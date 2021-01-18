@@ -1,9 +1,9 @@
 <template>
   <div id="app">
     <v-card>
-      <v-app-bar style="opacity: 0.6"   color="white">
+      <v-app-bar fixed color="white" elevate-on-scroll>
         <v-app-bar-nav-icon></v-app-bar-nav-icon>
-        <v-toolbar-title class="font-weight-black">周洛御景山庄</v-toolbar-title>
+        <v-toolbar-title>周洛御景山庄</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-toolbar-title>
           <v-btn @click="SelectPersonQty()" color="primary">
@@ -11,10 +11,11 @@
           </v-btn>
         </v-toolbar-title>
       </v-app-bar>
-      <v-sheet  >
+      <v-sheet style="padding-top: 50px;">
         <v-container>
-          <v-app >
-            <v-carousel v-show="items.length > 0" height="180px" cycle :interval="3000" hide-delimiters :show-arrows="false">
+          <v-app>
+            <v-carousel v-show="items.length > 0" height="180px" cycle :interval="3000" hide-delimiters
+              :show-arrows="false">
               <v-carousel-item v-for="(item, i) in items" :key="i" :src="item.src"></v-carousel-item>
             </v-carousel>
             <v-main>
@@ -22,20 +23,20 @@
                 <v-card style="height: 100%">
                   <v-tabs vertical>
                     <template v-for="item in foodList">
-                      <v-tab :key="item.title">{{ item.title }}</v-tab>
-                      <v-tab-item :key="'item' + item.title" transition="slide-x-transition">
-                        <template v-for="food in item.foods">
-                          <v-card flat :key="food.ID">
+                      <v-tab :key="item.TYPE_ID">{{ item.TYPE_NAME }}</v-tab>
+                      <v-tab-item :key="'item' + item.TYPE_ID" transition="slide-x-transition">
+                        <template v-for="food in item.FOODS">
+                          <v-card flat :key="food.FOOD_ID">
                             <v-card-text>
                               <v-card outlined>
                                 <v-list-item three-line style="padding: 0 0 0 16px">
                                   <v-list-item-avatar tile size="75">
-                                    <v-img src="https://cdn.vuetifyjs.com/images/john.png"></v-img>
+                                    <v-img :src="food[0].FOOD_DETAIL[0].Urls[0].URL"></v-img>
                                   </v-list-item-avatar>
                                   <v-list-item-content>
-                                    <p>{{ food.NAME }}</p>
+                                    <p>{{ food.FOOD_NAME }}</p>
                                     <div class="d-flex" style="height: 40px">
-                                      <p class="red--text">${{ food.PRICE }}</p>
+                                      <p class="red--text">${{ food[0].DETAIL_PRICE }}</p>
                                       <v-spacer></v-spacer>
                                       <v-btn v-if="food.NUM > 0" icon>
                                         <v-icon dense color="primary" @click="changeNum(food, -1)">
@@ -150,24 +151,9 @@
     </v-dialog>
   </div>
 </template>
-<style  >
-.container {
-  padding: 3px;
-}
-.v-tab {
-  padding: 0 !important;
-}
-.v-card__subtitle,
-.v-card__text,
-.v-card__title {
-  padding: 0 !important;
-}
-.v-input input {
-  text-align: center;
-}
-</style>
+ 
 <script>
-import axios from "axios";
+// import axios from "axios";
 export default {
   name: "Food",
   data: () => ({
@@ -179,76 +165,33 @@ export default {
     dialog: false,
     foodList: [
       {
-        title: "农家小炒",
-        foods: [
+        TYPE_ID: "164D146E775E49E7B627F8FEFCAEE19D",
+        ICON: null,
+        TYPE_NAME: "类别1",
+        FOODS: [
           {
-            ID: "1",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-          {
-            ID: "2",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-          {
-            ID: "3",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-          {
-            ID: "4",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-          {
-            ID: "5",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-          {
-            ID: "6",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-          {
-            ID: "7",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-        ],
-      },
-      {
-        title: "特色蒸菜",
-        foods: [
-          {
-            ID: "21",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "腊味合蒸",
-          },
-        ],
-      },
-      {
-        title: "营养炖汤",
-        foods: [
-          {
-            ID: "31",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "羊肉炖粉皮",
+            FOOD_ID: "ACC0C23408464E5F991E4A4088003CFD",
+            FOOD_TAG: null,
+            FOOD_NAME: "食物A",
+            FOOD_IMG_ID: null,
+            FOOD_DETAIL: [
+              {
+                DETAIL_ID: "5D622FEC91D7436FAC0A7A2A274D1D52",
+                DETAIL_NAME: "食物A_1",
+                DETAIL_DESC: "无",
+                DETAIL_PRICE: 100,
+                Urls: [
+                  {
+                    URL:
+                      "https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png",
+                  },
+                ],
+              },
+            ],
           },
         ],
       },
     ],
-
     items: [
       // {
       //   src: "https://cdn.vuetifyjs.com/images/carousel/squirrel.jpg",
@@ -277,10 +220,20 @@ export default {
     },
   },
   mounted() {
+    let self = this;
     document.title = this.SHOP_NAME;
-    // axios
-    //   .get("http://localhost:59703/order/food/Get")
-    //   .then((response) => console.log(response));
+    axios
+      .get(
+        "http://www.trastor.cn:4396/api/product/GetProductList?account=test01"
+      )
+      .then((response) => {
+        console.log(response);
+        if (response.data.success == true) {
+          self.foodList = response.data.data;
+          self.SHOP_NAME = response.data.SHOP_NAME;
+          self.foodList = response.data.data.TYPES;
+        }
+      });
   },
   methods: {
     showCar: function () {
@@ -291,7 +244,7 @@ export default {
           if (food.NUM > 0) this.itemsCar.push(food);
         });
       });
-      this.$store.commit('mutationsChangeFood',this.itemsCar)
+      this.$store.commit("mutationsChangeFood", this.itemsCar);
     },
     changeNum: function (food, num) {
       food.NUM += num;

@@ -1,19 +1,19 @@
-import Vue from 'vue'
-import Router from 'vue-router'
-import Order from '@/components/Order'
-import Food from '@/components/Food'
-import Login from '@/components/Login'
-import Register from '@/components/Register'
-import AddShop from '@/components/AddShop'
+// import Vue from 'vue'
+// import Router from 'vue-router'
+// import Order from '@/components/Order'
+// import Food from '@/components/Food'
+// import Login from '@/components/Login'
+// import Register from '@/components/Register'
+// import AddShop from '@/components/AddShop'
 
 
-Vue.use(Router)
+Vue.use(VueRouter)
 
-export default new Router({
+export default new VueRouter({
   routes: [{
       path: '/order',
       name: 'Order',
-      component: Order,
+      component: resolve => require(['@/components/Order'], resolve),
       meta: {
         title: "订单"
       }
@@ -21,7 +21,7 @@ export default new Router({
     {
       path: '/',
       name: 'Food',
-      component: Food,
+      component: resolve => require(['@/components/Food'], resolve),
       meta: {
         title: "点菜"
       }
@@ -29,7 +29,7 @@ export default new Router({
     {
       path: '/login',
       name: 'Login',
-      component: Login,
+      component: resolve => require(['@/components/Login'], resolve),
       meta: {
         title: "登陆"
       }
@@ -37,7 +37,7 @@ export default new Router({
     {
       path: '/Register',
       name: 'Register',
-      component: Register,
+      component: resolve => require(['@/components/Register'], resolve), 
       meta: {
         title: "注册店铺"
       }
@@ -45,7 +45,7 @@ export default new Router({
     {
       path: '/AddShop',
       name: 'AddShop',
-      component: AddShop,
+      component: resolve => require(['@/components/AddShop'], resolve),
       meta: {
         title: "添加店铺"
       }
