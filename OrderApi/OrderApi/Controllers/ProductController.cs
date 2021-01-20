@@ -62,13 +62,13 @@ namespace OrderApi.Controllers
                             FOOD_ID = z.Key.FOOD_ID,
                             FOOD_TAG = z.Key.TAG,
                             FOOD_NAME = z.Key.NAME,
-                            Urls = z.GroupBy(d => new { d.DETAIL_NAME, d.PRICE, d.DetailDesc, d.DETAIL_ID, d.FOOD_IMG_URL, d.FOOD_IMG_URL_ID })
+                            Urls = z.GroupBy(d => new { d.FOOD_IMG_URL, d.FOOD_IMG_URL_ID })
                             .Select(d=> new ProductImage
                             {
                                 URL = d.Key.FOOD_IMG_URL,
                                 IMG_ID = d.Key.FOOD_IMG_URL_ID
                             }).ToList(),
-                            FOOD_DETAIL = z.GroupBy(d => new { d.DETAIL_NAME, d.PRICE, d.DetailDesc, d.DETAIL_ID })
+                            FOOD_DETAIL = z.GroupBy(d => new { d.DETAIL_NAME, d.PRICE, d.DetailDesc, d.DETAIL_ID }).OrderBy(d=>d.Key.PRICE)
                             .Select(d => new ProductDetail
                             {
                                 DETAIL_ID = d.Key.DETAIL_ID,
