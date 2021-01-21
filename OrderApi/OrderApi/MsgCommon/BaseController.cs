@@ -12,7 +12,7 @@ namespace OrderApi.MsgCommon
     {
         public static string SHOP_ID { get; set; }
         public static string ACCOUNT { get; set; }
-        public static string SHOP_NAME { get; set; }
+        //public static string SHOP_NAME { get; set; }
         public static bool IS_ADMIN { get; set; }
         public static string TOKEN { get; set; }
         public BaseController()

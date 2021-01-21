@@ -102,6 +102,7 @@
   "OrderId": "",//订单ID，第一次创建不传，子订单需要传
   "DescNum":0 //桌号，第一次必传，子订单可不传
 }
+//无TOKEN认证
 ````
 
 ### /api/Product/DeskIsOccupied?desckNum={0}&shopAcount={1}
@@ -109,11 +110,25 @@
 ```` json
 //用户扫码先访问此API，判断此桌是否被占用，if 被占用，显示 新开一单 / 继续下单  两个按钮; else 直接显示菜单列表
 //判断当前桌是否有人正在占用 true:被占用
+//无TOKEN认证
 ````
 
 ### /api/Product/CloseOrder?orderId={0}
 
 ````json
 //关闭订单
+//无TOKEN认证
+````
+
+### /api/Product/GetDeskList
+
+```` json
+//获取当前店铺所有桌，有TOKEN认证
+````
+
+### /api/Product/AddOrEditDesk?deskNum={0}&deskDesc={1}
+
+```` json
+//编辑或新增桌，有TOKEN认证
 ````
 

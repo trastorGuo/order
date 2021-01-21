@@ -368,6 +368,48 @@ namespace OrderApi.Controllers
         }
 
 
+        [HttpGet]
+        [Auth]
+        public object GetDeskList()
+        {
+            using(var db = new OrderDB())
+            {
+                var result = from p in db.ShopDesks where p.ShopId == SHOP_ID select p;
+                return result.ToList();
+            }
+        }
 
+
+        [HttpGet]
+        [Auth]
+        public void AddOrEditDesk(string deskNum, string deskDesc)
+        {
+            using (var db = new OrderDB())
+            {
+                var result = from p in db.ShopDesks where p.DeskCount == deskNum select p;
+                if(result is null || result.Count() == 0)
+                {
+                    var deck = new ShopDesk()
+                    {
+                        ID = Guid.NewGuid().ToString("N").ToUpper(),
+                        DatetimeCreated = DateTime.Now,
+                        STATE = 'A',
+                        UserCreated = ACCOUNT,
+                        DeskCount = deskNum,
+                        DescDesc = deskDesc
+                    };
+                    db.Insert(deck);
+                }
+                else
+                {
+                    var desk = result.FirstOrDefault();
+                    desk.DatetimeModified = DateTime.Now;
+                    desk.UserModified = ACCOUNT;
+                    desk.DeskCount = deskNum;
+                    desk.DescDesc = deskDesc;
+                    db.Update(desk);
+                }
+            }
+        }
     }
 }
