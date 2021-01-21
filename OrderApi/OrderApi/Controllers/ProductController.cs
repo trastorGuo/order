@@ -258,5 +258,66 @@ namespace OrderApi.Controllers
             }
         }
 
+
+        [HttpPost]
+        public object PlaceAnOrder(JToken jt)
+        {
+            var model = JsonConvert.DeserializeObject<PlaceAnOrder>(jt.ToString());
+            using(var db = new OrderDB())
+            {
+                db.BeginTransaction();
+                try
+                {
+                    var shopId = (from p in db.Shops where p.ACCOUNT == model.account select p).FirstOrDefault()?.ID;
+                    if (string.IsNullOrEmpty(model.OrderId))
+                    {
+                        var head = new OrderHead()
+                        {
+                            ID = Guid.NewGuid().ToString("N").ToUpper(),
+                            DatetimeCreated = DateTime.Now,
+                            UserCreated = "custom",
+                            ShopId = shopId,
+                            STATE = 'A'
+                        };
+                        db.Insert(head);
+                        model.OrderId = head.ID;
+                    }
+
+                    var orderDetail = new OrderDetail()
+                    {
+                        ID = Guid.NewGuid().ToString("N").ToUpper(),
+                        DatetimeCreated = DateTime.Now,
+                        UserCreated = "custom",
+                        STATE = 'A',
+                        UserOrder = model.user,
+                        PrrentOrderId = model.OrderId
+                    };
+                    db.Insert(orderDetail);
+
+                    foreach (var item in model.foods)
+                    {
+                        var foodDetail = new OrderDetailFood()
+                        {
+                            ID = Guid.NewGuid().ToString("N").ToUpper(),
+                            DatetimeCreated = DateTime.Now,
+                            UserCreated = "custom",
+                            STATE = 'A',
+                            UserOrder = model.user,
+                            OrderDetailId = orderDetail.ID,
+                            FoodDetailId = item.DETAIL_ID,
+                            QTY = item.NUM
+                        };
+                        db.Insert(foodDetail);
+                    }
+                    db.CommitTransaction();
+                    return model.OrderId;
+                }
+                catch(Exception ex)
+                {
+                    throw new Exception(ex.Message);
+                    db.RollbackTransaction();
+                }
+            }
+        }
     }
 }

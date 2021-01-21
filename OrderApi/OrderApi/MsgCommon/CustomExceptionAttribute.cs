@@ -15,7 +15,7 @@ namespace MsgCommon
     {
         public void OnException(ExceptionContext context)
         {
-            HttpStatusCode status = HttpStatusCode.InternalServerError;
+            HttpStatusCode status = HttpStatusCode.OK;
 
             //处理各种异常
 
