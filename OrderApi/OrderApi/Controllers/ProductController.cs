@@ -268,7 +268,7 @@ namespace OrderApi.Controllers
                 db.BeginTransaction();
                 try
                 {
-                    var shopId = (from p in db.Shops where p.ACCOUNT == model.account select p).FirstOrDefault()?.ID;
+                    var shopId = (from p in db.Shops where p.ACCOUNT == model.Account select p).FirstOrDefault()?.ID;
                     if (string.IsNullOrEmpty(model.OrderId))
                     {
                         var head = new OrderHead()
@@ -277,7 +277,9 @@ namespace OrderApi.Controllers
                             DatetimeCreated = DateTime.Now,
                             UserCreated = "custom",
                             ShopId = shopId,
-                            STATE = 'A'
+                            STATE = 'A',
+                            DescNum = model.DescNum,
+                            IsClose = 'N'
                         };
                         db.Insert(head);
                         model.OrderId = head.ID;
@@ -289,12 +291,12 @@ namespace OrderApi.Controllers
                         DatetimeCreated = DateTime.Now,
                         UserCreated = "custom",
                         STATE = 'A',
-                        UserOrder = model.user,
+                        UserOrder = model.User,
                         PrrentOrderId = model.OrderId
                     };
                     db.Insert(orderDetail);
 
-                    foreach (var item in model.foods)
+                    foreach (var item in model.Foods)
                     {
                         var foodDetail = new OrderDetailFood()
                         {
@@ -302,7 +304,7 @@ namespace OrderApi.Controllers
                             DatetimeCreated = DateTime.Now,
                             UserCreated = "custom",
                             STATE = 'A',
-                            UserOrder = model.user,
+                            UserOrder = model.User,
                             OrderDetailId = orderDetail.ID,
                             FoodDetailId = item.DETAIL_ID,
                             QTY = item.NUM
@@ -319,5 +321,53 @@ namespace OrderApi.Controllers
                 }
             }
         }
+
+
+        /// <summary>
+        /// 判断当前桌是否有人正在占用 true:被占用
+        /// </summary>
+        /// <param name="desckNum"></param>
+        /// <param name="shopAcount"></param>
+        /// <returns></returns>
+        [HttpGet]
+        public bool DeskIsOccupied(int desckNum, string shopAcount)
+        {
+            using(var db = new OrderDB())
+            {
+                var shopId = (from p in db.Shops where p.ACCOUNT == shopAcount select p).FirstOrDefault()?.ID;
+                var order = (from p in db.OrderHeads
+                             orderby p.DatetimeCreated descending
+                             where p.DescNum == desckNum && p.ShopId == shopId
+                             select p).FirstOrDefault();
+                return order != null && order.IsClose == 'N';
+            }
+        }
+
+
+
+        [HttpGet]
+        public bool CloseOrder(string orderId)
+        {
+            using (var db = new OrderDB())
+            {
+                try
+                {
+                    var order = (from p in db.OrderHeads
+                                 where p.ID == orderId
+                                 select p).FirstOrDefault();
+                    order.IsClose = 'Y';
+                    order.DatetimeModified = DateTime.Now;
+                    db.Update(order);
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+                return true;
+            }
+        }
+
+
+
     }
 }

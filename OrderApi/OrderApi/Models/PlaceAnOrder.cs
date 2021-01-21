@@ -8,9 +8,10 @@ namespace OrderApi.Models
     public class PlaceAnOrder
     {
         public string OrderId { get; set; }
-        public List<OrderDetail> foods { get; set; }
-        public string account { get; set; }
-        public string user { get; set; }
+        public List<OrderDetail> Foods { get; set; }
+        public string Account { get; set; }
+        public string User { get; set; }
+        public int DescNum { get; set; }
     }
 
     public class OrderDetail
