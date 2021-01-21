@@ -18,9 +18,15 @@ namespace OrderApi.MsgCommon
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             var token = context.HttpContext.Request.Headers["Authorization"].ToString();
-            if (string.IsNullOrEmpty(token)) return;
+            if (string.IsNullOrEmpty(token) || context.ActionDescriptor.DisplayName == "OrderApi.Controllers.AuthController.GetToken (OrderApi)") return;
             var tokenHandler = new JwtSecurityTokenHandler();
-            var tt = tokenHandler.ReadJwtToken(token).Claims.ToList();
+            var jt = tokenHandler.ReadJwtToken(token);
+            var validTo = jt.ValidTo;
+            if(validTo < DateTime.UtcNow)
+            {
+                throw new ErrorException("令牌已过期", System.Net.HttpStatusCode.Unauthorized);
+            }
+            var tt = jt.Claims.ToList();
             BaseController.ACCOUNT = tt[0].Value;
             BaseController.IS_ADMIN = tt[1].Value == "Y";
             BaseController.TOKEN = token;

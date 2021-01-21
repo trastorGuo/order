@@ -23,7 +23,7 @@ namespace OrderApi.Domains
                     throw new Exception($"密码不能为空！");
                 }
                 var isExsit = from p in db.Shops
-                              where p.ACCOUNT == name && p.PASSWORD == Convert.ToDecimal(pwd)
+                              where p.ACCOUNT == name && p.PASSWORD == pwd
                               select p;
                 return isExsit.Count() > 0;
             }

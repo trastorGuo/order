@@ -28,7 +28,7 @@ namespace OrderApi.Domains
                     new Claim(ClaimTypes.Role, isAdmin),
                     new Claim("SHOP_ID", shopId)
                 }),
-                Expires = DateTime.UtcNow.AddDays(1),
+                Expires = DateTime.UtcNow.AddHours(2.5),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);

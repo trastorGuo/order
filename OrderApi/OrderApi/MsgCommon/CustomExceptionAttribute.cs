@@ -13,12 +13,12 @@ namespace MsgCommon
     /// </summary>
     public class CustomExceptionAttribute : IExceptionFilter
     {
+        public static HttpStatusCode status = HttpStatusCode.OK;
+
         public void OnException(ExceptionContext context)
         {
-            HttpStatusCode status = HttpStatusCode.OK;
-
+            //HttpStatusCode status = HttpStatusCode.OK;
             //处理各种异常
-
             context.ExceptionHandled = true;
             context.Result = new CustomExceptionResult((int)status, context.Exception);
         }
