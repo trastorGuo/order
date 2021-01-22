@@ -11,7 +11,7 @@ namespace OrderApi.Models
         public List<OrderDetail> Foods { get; set; }
         public string Account { get; set; }
         public string User { get; set; }
-        public int DescNum { get; set; }
+        public string DescNum { get; set; }
     }
 
     public class OrderDetail

@@ -24,6 +24,7 @@ namespace OrderApi.Controllers
                              join type in db.FoodTypes on p.ID equals type.ShopId
                              join food in db.Foods on type.ID equals food.TypeId
                              join dtl in db.FoodDetails on food.ID equals dtl.FoodId
+                             from shopImg in db.Images.LeftJoin(pr=>pr.ConnectId == p.ID)
                              from img in db.Images.LeftJoin(pr=>pr.ConnectId == dtl.ID)
                              from foodImg in db.Images.LeftJoin(pr=> pr.ConnectId == food.ID)
                              where p.ACCOUNT == account
@@ -31,6 +32,8 @@ namespace OrderApi.Controllers
                              {
                                  SHOP_ID = p.ID,
                                  SHOP_NAME = p.NAME,
+                                 SHOP_IMG_ID = shopImg.ID,
+                                 SHOP_IMG_URL = shopImg.URL,
                                  TYPE_ID = type.ID,
                                  type.ICON,
                                  type.TypeName,
@@ -50,6 +53,11 @@ namespace OrderApi.Controllers
                 {
                     SHOP_NAME = x.Key.SHOP_NAME,
                     SHOP_ID = x.Key.SHOP_ID,
+                    Urls = x.GroupBy(c=>new { c.SHOP_IMG_ID, c.SHOP_IMG_URL }).Select(c=> new ProductImage
+                    {
+                        URL = c.Key.SHOP_IMG_URL,
+                        IMG_ID = c.Key.SHOP_IMG_ID
+                    }).ToList(),
                     TYPES = x.ToList().GroupBy(c => new { c.ICON, c.TypeName, c.TYPE_ID })
                     .Select(c => new ProductType
                     {
@@ -330,7 +338,7 @@ namespace OrderApi.Controllers
         /// <param name="shopAcount"></param>
         /// <returns></returns>
         [HttpGet]
-        public bool DeskIsOccupied(int desckNum, string shopAcount)
+        public bool DeskIsOccupied(string desckNum, string shopAcount)
         {
             using(var db = new OrderDB())
             {
