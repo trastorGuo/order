@@ -10,6 +10,7 @@ namespace OrderApi.Models
         public string SHOP_NAME { get; set; }
         public string SHOP_ID { get; set; }
         public List<ProductType> TYPES { get; set; }
+        public List<ProductImage> Urls { get; set; }
     }
 
     public class ProductType

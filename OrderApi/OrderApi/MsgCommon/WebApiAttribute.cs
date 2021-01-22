@@ -15,13 +15,6 @@ namespace OrderApi.MsgCommon
 
         public string Name { get; set; }
 
-        //
-        // 摘要:
-        //     Creates a new Microsoft.AspNetCore.Mvc.RouteAttribute with the given route template.
-        //
-        // 参数:
-        //   template:
-        //     The route template. May not be null.
         public WebApiAttribute(string template)
         {
             Template = template;

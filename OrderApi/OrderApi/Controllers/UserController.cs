@@ -1,6 +1,7 @@
 ﻿using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OrderApi.Domains;
 using OrderApi.MsgCommon;
 using System;
@@ -36,7 +37,7 @@ namespace OrderApi.Controllers
 
 
         [HttpPost]
-        public void AddShop(Object value)
+        public void AddShop(JToken jt)
         {
             using (var db = new OrderDB())
             {
@@ -47,15 +48,39 @@ namespace OrderApi.Controllers
                     {
                         throw new Exception("当前用户无管理员权限!");
                     }
-                    var m = JsonConvert.DeserializeObject<SHOP>(value.ToString());
-                    if (LoginDomain.Current.UserIsExsist(m.NAME))
+                    var name = jt["NAME"].ToString();
+                    var address = jt["ADDRESS"].ToString();
+                    var account = jt["ACCOUNT"].ToString();
+                    var password = jt["PASSWORD"].ToString();
+                    var tel = jt["TEL"].ToString();
+                    var urls = JsonConvert.DeserializeObject<List<IMAGE>>(jt["URLS"].ToString());
+                    if (LoginDomain.Current.UserIsExsist(name))
                     {
                         throw new Exception("名称已存在！");
                     }
+                    var m = new SHOP();
                     m.ID = Guid.NewGuid().ToString("N").ToUpper();
                     m.UserCreated = ACCOUNT;
                     m.DatetimeCreated = DateTime.Now;
                     m.STATE = 'A';
+                    m.ACCOUNT = account;
+                    m.ADDRESS = address;
+                    m.PASSWORD = password;
+                    m.TEL = tel;
+                    m.IsAdmin = "N";
+                    foreach(var url in urls)
+                    {
+                        var u = new IMAGE
+                        {
+                            ID = Guid.NewGuid().ToString("N").ToUpper(),
+                            UserCreated = ACCOUNT,
+                            DatetimeCreated = DateTime.Now,
+                            STATE = 'A',
+                            URL = url.URL,
+                            ConnectId = m.ID
+                        };
+                        db.Insert(u);
+                    }
                     db.Insert(m);
                     db.CommitTransaction();
                 }
@@ -70,14 +95,51 @@ namespace OrderApi.Controllers
 
         [HttpPost]
         [Auth]
-        public void EditShop(Object value)
+        public void EditShop(JToken jt)
         {
             using (var db = new OrderDB())
             {
                 db.BeginTransaction();
                 try
                 {
-                    var m = JsonConvert.DeserializeObject<SHOP>(value.ToString());
+                    var name = jt["NAME"].ToString();
+                    var address = jt["ADDRESS"].ToString();
+                    var account = jt["ACCOUNT"].ToString();
+                    var password = jt["PASSWORD"].ToString();
+                    var tel = jt["TEL"].ToString();
+                    var urls = JsonConvert.DeserializeObject<List<IMAGE>>(jt["URLS"].ToString());
+                    var m = (from p in db.Shops where p.ACCOUNT == account select p).FirstOrDefault();
+                    m.UserModified = ACCOUNT;
+                    m.DatetimeModified = DateTime.Now;
+                    m.STATE = 'A';
+                    m.ACCOUNT = account;
+                    m.ADDRESS = address;
+                    m.PASSWORD = password;
+                    m.TEL = tel;
+                    foreach (var url in urls)
+                    {
+                        if (string.IsNullOrEmpty(url.ID))
+                        {
+                            var u = (from p in db.Images where p.ID == url.ID select p).FirstOrDefault();
+                            u.UserModified = ACCOUNT;
+                            u.DatetimeModified = DateTime.Now;
+                            u.URL = url.URL;
+                            db.Update(u);
+                        }
+                        else
+                        {
+                            var u = new IMAGE
+                            {
+                                ID = Guid.NewGuid().ToString("N").ToUpper(),
+                                UserCreated = ACCOUNT,
+                                DatetimeCreated = DateTime.Now,
+                                STATE = 'A',
+                                ConnectId = m.ID,
+                                URL = url.URL
+                            };
+                            db.Insert(u);
+                        }
+                    }
                     db.Update(m);
                     db.CommitTransaction();
                 }
@@ -92,9 +154,25 @@ namespace OrderApi.Controllers
 
         [HttpGet]
         [Auth]
-        public object ShopInfo()
+        public object ShopInfo(string account)
         {
-            return LoginDomain.Current.ShopInfo(ACCOUNT);
+            using (var db = new OrderDB()) {
+                var shopInfo = LoginDomain.Current.ShopInfo(account);
+                var urls = (from p in db.Images where p.ConnectId == shopInfo.ID select p).Select(x => new
+                {
+                    ID = x.ID,
+                    URL = x.URL
+                }).ToList();
+                return new
+                {
+                    shopInfo.NAME,
+                    shopInfo.ADDRESS,
+                    shopInfo.ACCOUNT,
+                    shopInfo.PASSWORD,
+                    shopInfo.TEL,
+                    URLS = urls
+                };
+            }
         }
     }
 }

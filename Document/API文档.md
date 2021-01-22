@@ -37,6 +37,7 @@
         ]
     }
 }
+//有TOKEN认证
 ````
 
 ### /api/Product/AddType
@@ -46,6 +47,7 @@
     "ICON": "",
     "TYPE_NAME": ""
 }
+//有TOKEN认证
 ````
 
 ### /api/Product/EditProduct
@@ -81,6 +83,7 @@
         ]
     }
 }
+//有TOKEN认证
 ````
 
 ### /api/Product/PlaceAnOrder
@@ -100,12 +103,55 @@
   "Account":"test01",
   "User": "trastor",
   "OrderId": "",//订单ID，第一次创建不传，子订单需要传
+<<<<<<< HEAD
   "DescNum":0 //桌号，第一次必传，子订单可不传
   "PersonNum":2//人数
    "IsPrint":"N"//是否打印，N,Y。默认Y
+=======
+  "DescNum":"" //桌号，第一次必传，子订单可不传
+  "PersonNum":2//人数
+  "IsPrint":"N"//是否打印，N,Y。默认Y
+>>>>>>> 5032c8f47498aec37041b4773c0f6a5710ee0dd3
 }
 //无TOKEN认证
 ````
+
+### /api/User/AddShop
+
+```` json
+//新增值允许管理员
+//有TOKEN认证
+{
+    "NAME":"",
+    "ADDRESS":"",
+    "ACCOUNT":"",
+    "PASSWORD":"",
+    "TEL":"",
+    "URLS":[{
+        "URL":""
+    }]
+}
+````
+
+### /api/User/EditShop
+
+```` json
+//编辑允许用户、管理员编辑
+//有TOKEN认证
+{
+    "NAME":"",
+    "ADDRESS":"",
+    "ACCOUNT":"",//必填，为当前编辑的用户
+    "PASSWORD":"",
+    "TEL":"",
+    "URLS":[{
+        "ID":"",//有ID修改，无ID新增
+        "URL":""
+    }]
+}
+````
+
+## GET
 
 ### /api/Product/DeskIsOccupied?desckNum={0}&shopAcount={1}
 
@@ -125,12 +171,34 @@
 ### /api/Product/GetDeskList
 
 ```` json
-//获取当前店铺所有桌，有TOKEN认证
+//获取当前店铺所有桌
+//有TOKEN认证
 ````
 
 ### /api/Product/AddOrEditDesk?deskNum={0}&deskDesc={1}
 
 ```` json
-//编辑或新增桌，有TOKEN认证
+//编辑或新增桌
+//有TOKEN认证
+````
+
+
+### /api/User/ShopInfo?account={0}
+
+```` json
+//返回格式
+//允许用户、和管理员访问
+//有TOKEN认证
+{
+    "NAME":"",
+    "ADDRESS":"",
+    "ACCOUNT":"",
+    "PASSWORD":"",
+    "TEL":"",
+    "URLS":[{
+        "ID":"",
+        "URL":""
+    }]
+}
 ````
 
