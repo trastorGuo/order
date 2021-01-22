@@ -1,145 +1,76 @@
 <template>
   <div id="app">
-    这是结算页面
+    <div style=" text-align:center;margin:20px;">
+      <p>{{shopName}} {{descNum}}  {{personNum}}人</p>
+      <p class="display-1 text--primary">
+        <v-icon color="primary" large>
+          mdi-check-circle
+        </v-icon>下单成功！
+      </p>
+      <div class="text--primary">
+        商家正在备菜中....
+      </div>
+    </div>
+    <v-card class="mx-auto" max-width="344">
+      <v-card-text>
+
+        <template v-for="food in itemsCar">
+          <v-list-item :key="food.SelectDetail.DETAIL_ID" v-if="food.NUM > 0">
+            <v-list-item-avatar tile size="40">
+              <v-img :src="food.Urls[0].URL"></v-img>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title v-if="food.FOOD_DETAIL.length>1">
+                {{food.FOOD_NAME}} - {{food.SelectDetail.DETAIL_NAME}}
+              </v-list-item-title>
+              <v-list-item-title v-else>
+                {{food.FOOD_NAME}}
+              </v-list-item-title>
+            </v-list-item-content>
+            <!-- <v-spacer></v-spacer> -->
+            <v-list-item-content>
+              <v-list-item-title style="text-align: center;" color="primary"> ${{food.SelectDetail.DETAIL_PRICE}} ×
+                {{food.NUM }} </v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
+        </template>
+      </v-card-text>
+      <!-- <v-card-actions>
+     
+      </v-card-actions> -->
+    </v-card>
+    <div style="text-align:center;padding:8px">
+      <v-btn style="width:100%" color="primary" @click="toFood()">
+        继续点餐
+      </v-btn>
+    </div>
   </div>
 </template>
-
 <script>
-// import axios from 'axios';
 export default {
   name: "Order",
   data: () => ({
-    SHOP_NAME: "周洛御景山庄",
-    tab: null,
-    PERSON_QTY: 2,
-    num: 10,
-    sheet: false,
-    dialog: false,
-    foodList: [
-      {
-        title: "农家小炒",
-        foods: [
-          {
-            ID: "1",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-          {
-            ID: "2",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-          {
-            ID: "3",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-          {
-            ID: "4",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-          {
-            ID: "5",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-          {
-            ID: "6",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-          {
-            ID: "7",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "辣椒炒肉",
-          },
-        ],
-      },
-      {
-        title: "特色蒸菜",
-        foods: [
-          {
-            ID: "21",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "腊味合蒸",
-          },
-        ],
-      },
-      {
-        title: "营养炖汤",
-        foods: [
-          {
-            ID: "31",
-            NUM: 0,
-            PRICE: 38,
-            NAME: "羊肉炖粉皮",
-          },
-        ],
-      },
-    ],
-
-    items: [
-      {
-        src: "https://cdn.vuetifyjs.com/images/carousel/squirrel.jpg",
-      },
-      {
-        src: "https://cdn.vuetifyjs.com/images/carousel/sky.jpg",
-      },
-      {
-        src: "https://cdn.vuetifyjs.com/images/carousel/bird.jpg",
-      },
-      {
-        src: "https://cdn.vuetifyjs.com/images/carousel/planet.jpg",
-      },
-    ],
-    itemsCar: [],
-    carNum: 0,
+    shopName: "",
+    personNum: 0,
+    itemsCar:[],
+    descNum:0,
   }),
-  watch: {
-    sheet: function (newValue, oldValue) {
-      this.carNum = 0;
-      this.foodList.forEach((element) => {
-        element.foods.forEach((food) => {
-          if (food.NUM > 0) this.carNum++;
-        });
-      });
-    },
-  },
   mounted() {
-    // axios
-    //   .get("http://localhost:59703/order/food/Get")
-    //   .then((response) => console.log(response));
+    this.itemsCar = this.$store.state.itemsCar;
+    this.personNum = this.$store.state.personNum;
+    this.shopName = this.$store.state.shopName;
+    this.descNum = this.$store.state.descNum;
   },
   methods: {
-    showCar: function () {
-      this.sheet = true;
-      this.itemsCar = [];
-      this.foodList.forEach((element) => {
-        element.foods.forEach((food) => {
-          if (food.NUM > 0) this.itemsCar.push(food);
-        });
+    toFood() {
+      this.$router.push({
+        path:
+          "/food/" +
+          this.$store.state.account +
+          "/" +
+          this.$store.state.descNum,
       });
-    },
-    changeNum: function (food, num) {
-      food.NUM += num;
-      this.carNum = 0;
-      this.foodList.forEach((element) => {
-        element.foods.forEach((food) => {
-          if (food.NUM > 0) this.carNum++;
-        });
-      });
-    },
-    SelectPersonQty: function () {
-      this.dialog = true;
     },
   },
 };

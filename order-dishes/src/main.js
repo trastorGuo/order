@@ -4,12 +4,25 @@ import App from './App'
 import router from './router'
 import store from './store'
 import vuetify from './plugins/vuetify';
-// import 'roboto-fontface/css/roboto/roboto-fontface.css'
-// // import '@mdi/font/css/materialdesignicons.css'
+// import vuetify from 'vuetify';
 import './assets/css/common.css'  
-Vue.config.productionTip = false;
- 
+import Message from 'vue-m-message';
+import 'vue-m-message/dist/index.css'
 
+//引入
+import VueLazyload from 'vue-lazyload'
+//注册
+Vue.use(VueLazyload)
+Vue.config.devtools = true;
+
+Vue.use(Message);
+Vue.config.productionTip = false;
+ import {
+   http
+ } from './components/common/http';
+Vue.prototype.$http = http;
+Vue.prototype.$store = store;
+ 
  router.beforeEach((to, from, next) => {
    /* 路由发生变化修改页面title */
    if (to.meta.title) {

@@ -4,16 +4,28 @@
 Vue.use(Vuex);
 
 const state = {
-    foodList:{},
+  itemsCar: [],
+  shopName: "",
+  descNum: "",
+  personNum: 0,
 };
 
 const mutations = {
-    mutationsChangeFood(state, obj){
-        return state.foodList = obj;
-    }
+  mutationsChangeCar(state, obj) {
+    return state.itemsCar = obj;
+  },
+  mutationsChangeDescNum(state, obj) {
+    return state.descNum = obj;
+  },
+  mutationsChangePersonNum(state, obj) {
+    return state.personNum = obj;
+  },
+  mutationsChangeShopName(state, obj) {
+    return state.shopName = obj;
+  },
 }
 
 export default new Vuex.Store({
-    state,
-    mutations
+  state,
+  mutations
 })

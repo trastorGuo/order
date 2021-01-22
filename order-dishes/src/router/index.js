@@ -8,6 +8,7 @@
 
 
 Vue.use(VueRouter)
+Vue.config.devtools = true;
 
 export default new VueRouter({
   routes: [{
@@ -19,7 +20,7 @@ export default new VueRouter({
       }
     },
     {
-      path: '/',
+      path: '/food/:account/:descnum',
       name: 'Food',
       component: resolve => require(['@/components/Food'], resolve),
       meta: {
@@ -48,6 +49,14 @@ export default new VueRouter({
       component: resolve => require(['@/components/AddShop'], resolve),
       meta: {
         title: "添加店铺"
+      }
+    },
+    {
+      path: '/Shop',
+      name: 'Shop',
+      component: resolve => require(['@/components/Shop'], resolve),
+      meta: {
+        title: "我的店铺"
       }
     }
   ]
