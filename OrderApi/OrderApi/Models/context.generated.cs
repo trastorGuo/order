@@ -25,6 +25,7 @@ namespace OrderApi
 		public ITable<FOOD>            Foods            { get { return this.GetTable<FOOD>(); } }
 		public ITable<FoodDetail>      FoodDetails      { get { return this.GetTable<FoodDetail>(); } }
 		public ITable<FoodType>        FoodTypes        { get { return this.GetTable<FoodType>(); } }
+		public ITable<IMAGE>           Images           { get { return this.GetTable<IMAGE>(); } }
 		public ITable<OrderDetail>     OrderDetails     { get { return this.GetTable<OrderDetail>(); } }
 		public ITable<OrderDetailFood> OrderDetailFoods { get { return this.GetTable<OrderDetailFood>(); } }
 		public ITable<OrderHead>       OrderHeads       { get { return this.GetTable<OrderHead>(); } }
@@ -60,7 +61,6 @@ namespace OrderApi
 		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
 		[Column("TYPE_ID"),              Nullable         ] public string    TypeId           { get; set; } // varchar(80)
 		[Column(),                       Nullable         ] public string    NAME             { get; set; } // varchar(80)
-		[Column("IMG_ID"),               Nullable         ] public string    ImgId            { get; set; } // varchar(80)
 		[Column(),                       Nullable         ] public string    TAG              { get; set; } // varchar(80)
 	}
 
@@ -91,6 +91,19 @@ namespace OrderApi
 		[Column("SHOP_ID"),              Nullable         ] public string    ShopId           { get; set; } // varchar(80)
 		[Column("TYPE_NAME"),            Nullable         ] public string    TypeName         { get; set; } // varchar(80)
 		[Column(),                       Nullable         ] public string    ICON             { get; set; } // varchar(80)
+	}
+
+	[Table(Schema="dbo", Name="IMAGE")]
+	public partial class IMAGE
+	{
+		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
+		[Column("CONNECT_ID"),                     NotNull] public string    ConnectId        { get; set; } // varchar(80)
+		[Column(),                       Nullable         ] public string    URL              { get; set; } // varchar(240)
 	}
 
 	[Table(Schema="dbo", Name="ORDER_DETAIL")]
@@ -147,6 +160,7 @@ namespace OrderApi
 		[Column(),                       Nullable         ] public string    ACCOUNT          { get; set; } // varchar(80)
 		[Column(),                       Nullable         ] public decimal?  PASSWORD         { get; set; } // decimal(18, 0)
 		[Column(),                       Nullable         ] public string    TEL              { get; set; } // varchar(80)
+		[Column("IS_ADMIN"),             Nullable         ] public string    IsAdmin          { get; set; } // varchar(10)
 	}
 
 	[Table(Schema="dbo", Name="SHOP_DESK")]
@@ -186,6 +200,12 @@ namespace OrderApi
 		}
 
 		public static FoodType Find(this ITable<FoodType> table, string ID)
+		{
+			return table.FirstOrDefault(t =>
+				t.ID == ID);
+		}
+
+		public static IMAGE Find(this ITable<IMAGE> table, string ID)
 		{
 			return table.FirstOrDefault(t =>
 				t.ID == ID);

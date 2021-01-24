@@ -17,6 +17,7 @@ module.exports = {
     'vue-router': 'VueRouter',
     'vuex': 'Vuex',
     'axios': 'axios',
+    'Qs': 'Qs',
     'Vuetify': 'Vuetify',
   },
   context: path.resolve(__dirname, '../'),
