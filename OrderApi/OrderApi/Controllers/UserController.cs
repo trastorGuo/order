@@ -163,6 +163,11 @@ namespace OrderApi.Controllers
                     ID = x.ID,
                     URL = x.URL
                 }).ToList();
+                var DeskList = (from p in db.ShopDesks where p.ShopId == SHOP_ID select p).Select(x=>new
+                {
+                    x.DescDesc,
+                    x.DeskCount
+                }).ToList();
                 return new
                 {
                     shopInfo.NAME,
@@ -170,7 +175,8 @@ namespace OrderApi.Controllers
                     shopInfo.ACCOUNT,
                     shopInfo.PASSWORD,
                     shopInfo.TEL,
-                    URLS = urls
+                    URLS = urls,
+                    DeskList
                 };
             }
         }

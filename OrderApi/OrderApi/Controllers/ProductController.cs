@@ -23,7 +23,7 @@ namespace OrderApi.Controllers
                 var result = from p in db.Shops
                              join type in db.FoodTypes on p.ID equals type.ShopId
                              join food in db.Foods on type.ID equals food.TypeId
-                             join dtl in db.FoodDetails on food.ID equals dtl.FoodId
+                             from dtl in db.FoodDetails.LeftJoin(pr=> pr.FoodId == food.ID) 
                              from shopImg in db.Images.LeftJoin(pr=>pr.ConnectId == p.ID)
                              from img in db.Images.LeftJoin(pr=>pr.ConnectId == dtl.ID)
                              from foodImg in db.Images.LeftJoin(pr=> pr.ConnectId == food.ID)
@@ -49,7 +49,7 @@ namespace OrderApi.Controllers
                                  img.URL,
                                  DETAIL_IMG_ID = img.ID
                              };
-                var rs = result.ToList().GroupBy(x => new { x.SHOP_NAME, SHOP_ID}).Select(x => new ProductModel
+                var rs = result.ToList().GroupBy(x => new { x.SHOP_NAME, x.SHOP_ID}).Select(x => new ProductModel
                 {
                     SHOP_NAME = x.Key.SHOP_NAME,
                     SHOP_ID = x.Key.SHOP_ID,

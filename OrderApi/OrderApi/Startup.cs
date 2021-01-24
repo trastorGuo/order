@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LinqToDB.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -40,7 +42,7 @@ namespace OrderApi
                 options.Filters.Add(typeof(CustomExceptionAttribute));
                 options.Filters.Add<TokenFilter>();
             });
-
+            services.AddSingleton<IAuthorizationHandler, ResourceAuthorizationHandler>();
 
             DataConnection.DefaultSettings = new Linq2dbSettings(Configuration);
             services.AddControllers();
@@ -61,7 +63,7 @@ namespace OrderApi
                         ValidateAudience = true,
                         ValidAudience = "Security:Tokens:Audience",
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("Security:Tokens:Key"))
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("Security:Tokens:Key")),
                     };
                     options.Events = new JwtBearerEvents
                     {
@@ -69,6 +71,17 @@ namespace OrderApi
                         {
                             var token = context.Request.Headers["Authorization"];
                             context.Token = token.FirstOrDefault();
+                            if (string.IsNullOrEmpty(context.Token))
+                            {
+                                return Task.CompletedTask;
+                            }
+                            var tokenHandler = new JwtSecurityTokenHandler();
+                            var jt = tokenHandler.ReadJwtToken(context.Token);
+                            var validTo = jt.ValidTo;
+                            if (validTo < DateTime.UtcNow)
+                            {
+                                throw new ErrorException("ÁîÅÆÒÑ¹ýÆÚ", System.Net.HttpStatusCode.Unauthorized);
+                            }
                             return Task.CompletedTask;
                         }
                     };
