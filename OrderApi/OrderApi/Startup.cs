@@ -42,7 +42,6 @@ namespace OrderApi
                 options.Filters.Add(typeof(CustomExceptionAttribute));
                 options.Filters.Add<TokenFilter>();
             });
-            services.AddSingleton<IAuthorizationHandler, ResourceAuthorizationHandler>();
 
             DataConnection.DefaultSettings = new Linq2dbSettings(Configuration);
             services.AddControllers();
