@@ -1,8 +1,9 @@
 <template>
   <div id="app" style="height: 100%;width: 100%;">
     <div class="backgroud-img-div">
-      <img  :src="testUrl" style="position: fixed;bottom: 0;width: 100%;" />
-      <!-- <img src="https://gitee.com/trastor/picture/raw/master/1611238740(1).jpg" style="position: fixed;bottom: 0;width: 100%;" /> -->
+      <!-- <img :src="testUrl" style="position: fixed;bottom: 0;width: 100%;" /> -->
+      <img src="http://cdn.trastor.cn/huoguo.jpg?e=1611563582&token=ClIOkNHZ5aCGStAfuRj4fm_8trdXawNcbwn6-s-X:NErKPNSMMeIZgsyMWSMJh8Jn6Yk="
+        style="position: fixed;bottom: 0;width: 100%;" />
       <!-- <img src="https://gitee.com/trastor/picture/raw/master/image-20210117195619570.png" style="position: fixed;bottom: 0;width: 100%;" /> -->
     </div>
     <div class="login-border-div ">
@@ -25,15 +26,7 @@ export default {
     name: "",
     password: "",
     testUrl: "",
-    // testUrl: "https://gitee.com/trastor/picture/raw/master/huoguo.jpg",
   }),
-
-  mounted() {
-    let self = this;
-    setTimeout(function(){
-      self.testUrl = "https://gitee.com/trastor/picture/raw/master/huoguo.jpg";
-    },500)
-  },
   methods: {
     login: function () {
       let self = this;
@@ -57,13 +50,31 @@ export default {
               self.$message.error(response.message.content);
               return;
             }
-            self.$message.success("登陆成功！");
             window.localStorage.setItem("accessToken", response.data);
-            self.$router.push({ path: "/food/"+self.name });
+            self
+              .$http("get", "/api/User/ShopInfo?account=" + self.name)
+              .then((response) => {
+                console.log(response);
+                if (response != null) {
+                  if (!response.success) {
+                    self.$message.error(response.message.content);
+                    return;
+                  }
+                  self.$message.success("登陆成功！");
+                  self.$store.commit("mutationsChangeShopInfo", response.data);
+                  window.localStorage.setItem(
+                    "shopInfo",
+                    JSON.stringify(response.data)
+                  );
+                  self.$router.push({
+                    path: "/shop/" + self.name + "/ShopInfo",
+                  });
+                }
+              });
           }
         })
         .catch((err) => {
-          self.$message.error("登陆失败:"+err);
+          self.$message.error("登陆失败:" + err);
           console.log(err.message);
         })
         .finally(() => {});

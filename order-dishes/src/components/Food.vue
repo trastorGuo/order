@@ -14,30 +14,17 @@
       <v-sheet style="padding-top: 50px;">
         <v-container>
           <v-app>
-            <!-- <v-carousel v-model="model"  height="180px" cycle :interval="3000" hide-delimiters
-              :show-arrows="false">
-              <v-carousel-item v-for="(color, i) in colors" :key="color">
-                <v-sheet :color="color" height="100%" tile>
-                  <v-row class="fill-height" align="center" justify="center">
-                    <div class="display-3">
-                      Slide {{ i + 1 }}
-                    </div>
-                  </v-row>
-                </v-sheet>
-              </v-carousel-item>
-            </v-carousel> -->
-
             <v-carousel v-show="items.length > 0" height="180px" cycle :interval="3000" hide-delimiters
               :show-arrows="false">
               <v-carousel-item v-for="(item, i) in items" :key="i" :src="item.src"></v-carousel-item>
             </v-carousel>
-            <v-main>
+            <v-main  style="padding-top:5px;" >
               <v-container fluid style="height: 100%">
                 <v-card style="height: 100%">
                   <v-tabs vertical>
                     <template v-for="item in types">
                       <v-tab :key="item.TYPE_ID">{{ item.TYPE_NAME }}</v-tab>
-                      <v-tab-item :key="'item' + item.TYPE_ID" transition="slide-x-transition">
+                      <v-tab-item :key="'item' + item.TYPE_ID" >
                         <template v-for="food in item.FOODS">
                           <v-card flat :key="food.FOOD_ID">
                             <v-card-text>
@@ -95,7 +82,6 @@
               </v-badge>
               <v-btn @click="showCar()" :disabled="carNum <= 0" color="primary" style="float: right;" class="ml-auto"
                 elevation="1">结算</v-btn>
-              <!-- <v-btn @change="showCar" color="primary" style="float: right;" class="ml-auto" elevation="1">结算</v-btn> -->
               <v-bottom-sheet v-model="sheet" scrollable>
                 <v-sheet class="text-center">
                   <v-card>
@@ -112,7 +98,6 @@
                         <template v-for="food in itemsCar">
                           <v-list-item :key="food.FOOD_ID" v-if="food.NUM > 0">
                             <v-list-item-avatar tile size="40">
-                              <!-- <v-img src="https://gitee.com/trastor/picture/raw/master/VCG211262720151.jpg"></v-img> -->
                               <v-img :src="food.Urls[0].URL"></v-img>
                             </v-list-item-avatar>
                             <v-list-item-content>
@@ -164,13 +149,14 @@
       </v-sheet>
     </v-card>
 
-    <v-dialog persistent v-model="dialog" transition="dialog-top-transition">
+    <v-dialog persistent v-model="dialog">
       <template v-slot:default="dialog">
         <v-card>
           <v-toolbar color="primary" dark>请输入用餐人数</v-toolbar>
           <v-card-text>
-            <v-text-field style="margin-right: 16px;" prepend-icon="mdi-account-supervisor" :rules="[ value => (value > 0) || '需大于0',]"
-              type="number" v-model="personNum" color="purple darken-2" required></v-text-field>
+            <v-text-field style="margin-right: 16px;" prepend-icon="mdi-account-supervisor"
+              :rules="[ value => (value > 0) || '需大于0',]" type="number" v-model="personNum" color="purple darken-2"
+              required></v-text-field>
           </v-card-text>
           <v-card-actions class="justify-end">
             <v-btn block @click="dialog.value = false" color="primary" :disabled="personNum==''||personNum<0">确认
@@ -184,7 +170,7 @@
  
 <script>
 export default {
-  name: "Food",
+  name: "food",
   data: () => ({
     shopName: "",
     account: "",
@@ -210,17 +196,17 @@ export default {
     },
     shopName: function (newValue, oldValue) {
       document.title = newValue;
-         this.$store.commit("mutationsChangeShopName",newValue)
+      this.$store.commit("mutationsChangeShopName", newValue);
     },
     personNum: function (newValue, oldValue) {
-      this.$store.commit("mutationsChangePersonNum",newValue)
+      this.$store.commit("mutationsChangePersonNum", newValue);
       this.$data.personNum = Number(newValue);
     },
     descNum: function (newValue, oldValue) {
-      this.$store.commit("mutationsChangeDescNum",newValue)
+      this.$store.commit("mutationsChangeDescNum", newValue);
     },
     account: function (newValue, oldValue) {
-      this.$store.commit("mutationsChangeAccount",newValue)
+      this.$store.commit("mutationsChangeAccount", newValue);
     },
   },
   mounted() {
@@ -231,8 +217,7 @@ export default {
       self.descNum = self.urlParam.descnum;
     }
     // this.$vuetify.theme.themes.light.primary = "#000";//修改主题颜色
-    self
-      .$http("get", "/api/product/GetProductList?account=" + self.account)
+    self.$http("get", "/api/product/GetProductList?account=" + self.account)
       .then((response) => {
         console.log(response);
         if (response != null) {
@@ -316,7 +301,7 @@ export default {
         .$http("post", "/api/Product/PlaceAnOrder", data)
         .then((response) => {
           self.$message.success("您已成功下单");
-          self.$router.push({path:"/order"});
+          self.$router.push({ path: "/OrderSuccess" });
         })
         .catch((err) => {
           self.$message.success(err);

@@ -1,8 +1,14 @@
 require('promise.prototype.finally').shim();
-// Ìí¼ÓÇëÇóÀ¹½ØÆ÷
+// æ·»åŠ è¯·æ±‚æ‹¦æˆªå™¨
 axios.interceptors.request.use(function (config) {
   console.log("request:");
   console.log(config);
+
+  let token = window.localStorage.getItem("accessToken")
+  if (token) {
+    //å°†tokenæ”¾åˆ°è¯·æ±‚å¤´å‘é€ç»™æœåŠ¡å™¨,å°†tokenkeyæ”¾åœ¨è¯·æ±‚å¤´ä¸­
+    config.headers.authorization = token;
+  }
   return config;
 }, function (error) {
   console.log("request error:");
@@ -10,13 +16,13 @@ axios.interceptors.request.use(function (config) {
   return Promise.reject(error);
 });
 
-// Ìí¼ÓÏìÓ¦À¹½ØÆ÷
+// æ·»åŠ å“åº”æ‹¦æˆªå™¨
 axios.interceptors.response.use(function (response) {
   console.log("response:");
   console.log(response); 
   if (response.status ==401)
   {
-    this.$message.error("ÇëÖØĞÂµÇÂ½");
+    this.$message.error("è¯·é‡æ–°ç™»é™†");
      this.$router.push({
        path: "/food/" + self.name
      });
@@ -28,10 +34,10 @@ axios.interceptors.response.use(function (response) {
 });
 
 /**
- * ·â×°axiosµÄÍ¨ÓÃÇëÇó
+ * å°è£…axiosçš„é€šç”¨è¯·æ±‚
  * @param  {string}   method     get\post\put\delete
- * @param  {string}   url       ÇëÇóµÄ½Ó¿ÚURL
- * @param  {object}   param     ´«µÄ²ÎÊı£¬Ã»ÓĞÔò´«¿Õ¶ÔÏó
+ * @param  {string}   url       è¯·æ±‚çš„æ¥å£URL
+ * @param  {object}   param     ä¼ çš„å‚æ•°ï¼Œæ²¡æœ‰åˆ™ä¼ ç©ºå¯¹è±¡
  */
 function http(method, url, param) {
   param = param && typeof param === 'object' ? param : {};
@@ -40,19 +46,10 @@ function http(method, url, param) {
     url: url,
     method: method,
     baseURL: 'http://www.trastor.cn:4396',
-    // transformRequest: [function (param) {
-    //   return Qs.stringify(param);
-    // }],
-    // headers: {
-    //   'X-Requested-With': 'XMLHttpRequest',
-    //   "accessToken": token == null ? "" : token,
-    // },
     timeout: 30000,
   };
-
-  // postÇëÇóÊ±ĞèÒªÉè¶¨Content-Type
+  // postè¯·æ±‚æ—¶éœ€è¦è®¾å®šContent-Type
   if (method === 'post') {
-   // config.headers['Content-Type'] = 'application/json; charset=utf-8';
     config.data = param;
   } else if (method === 'get') {
     config.params = param;

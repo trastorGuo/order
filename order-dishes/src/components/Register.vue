@@ -1,7 +1,7 @@
 <template>
   <div id="app" style="height: 100%;width: 100%;">
     <div class="backgroud-img-div">
-      <img src="../assets/huoguo.jpg" style="position: fixed;bottom: 0;width: 100%;" />
+      <img src="https://gitee.com/trastor/picture/raw/master/huoguo.jpg" style="position: fixed;bottom: 0;width: 100%;" />
     </div>
     <div class="login-border-div ">
         <!-- <div style="color: white;text-align: center;">周洛御景山庄</div> -->

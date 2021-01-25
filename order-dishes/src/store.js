@@ -4,10 +4,12 @@
 Vue.use(Vuex);
 
 const state = {
+  shopInfo: [],
   itemsCar: [],
   shopName: "",
   descNum: "",
   personNum: 0,
+  account: "",
 };
 
 const mutations = {
@@ -22,6 +24,12 @@ const mutations = {
   },
   mutationsChangeShopName(state, obj) {
     return state.shopName = obj;
+  },
+  mutationsChangeAccount(state, obj) {
+    return state.account = obj;
+  },
+  mutationsChangeShopInfo(state, obj) {
+    return state.shopInfo = obj;
   },
 }
 

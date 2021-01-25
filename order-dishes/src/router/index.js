@@ -12,17 +12,17 @@ Vue.config.devtools = true;
 
 export default new VueRouter({
   routes: [{
-      path: '/order',
-      name: 'Order',
-      component: resolve => require(['@/components/Order'], resolve),
+      path: '/OrderSuccess',
+      name: 'OrderSuccess',
+      component: resolve => require(['@/components/OrderSuccess'], resolve),
       meta: {
         title: "订单"
       }
     },
     {
       path: '/food/:account/:descnum',
-      name: 'Food',
-      component: resolve => require(['@/components/Food'], resolve),
+      name: 'food',
+      component: resolve => require(['@/components/food'], resolve),
       meta: {
         title: "点菜"
       }
@@ -38,26 +38,28 @@ export default new VueRouter({
     {
       path: '/Register',
       name: 'Register',
-      component: resolve => require(['@/components/Register'], resolve), 
+      component: resolve => require(['@/components/Register'], resolve),
       meta: {
         title: "注册店铺"
       }
     },
+
     {
-      path: '/AddShop',
-      name: 'AddShop',
-      component: resolve => require(['@/components/AddShop'], resolve),
-      meta: {
-        title: "添加店铺"
-      }
-    },
-    {
-      path: '/Shop',
+      path: '/Shop/:account',
       name: 'Shop',
       component: resolve => require(['@/components/Shop'], resolve),
       meta: {
         title: "我的店铺"
-      }
+      },
+      children: [{
+        path: 'ShopInfo',
+        name: 'ShopInfo',
+        component: resolve => require(['@/components/ShopInfo'], resolve),
+      }, {
+        path: 'FoodManagement',
+        name: 'FoodManagement',
+        component: resolve => require(['@/components/foodManagement'], resolve),
+      }]
     }
   ]
 })

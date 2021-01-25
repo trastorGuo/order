@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import Food from "./components/Food";
+import Food from "./components/food";
 
 export default {
   name: "App",
