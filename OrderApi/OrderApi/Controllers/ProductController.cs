@@ -21,8 +21,8 @@ namespace OrderApi.Controllers
             using(var db = new OrderDB())
             {
                 var result = from p in db.Shops
-                             join type in db.FoodTypes on p.ID equals type.ShopId
-                             join food in db.Foods on type.ID equals food.TypeId
+                             from type in db.FoodTypes.LeftJoin(pr=> pr.ShopId == p.ID)
+                             from food in db.Foods.LeftJoin(pr=> pr.TypeId == type.ID)
                              from dtl in db.FoodDetails.LeftJoin(pr=> pr.FoodId == food.ID) 
                              from shopImg in db.Images.LeftJoin(pr=>pr.ConnectId == p.ID)
                              from img in db.Images.LeftJoin(pr=>pr.ConnectId == dtl.ID)
@@ -390,7 +390,7 @@ namespace OrderApi.Controllers
 
         [HttpGet]
         [Auth]
-        public void AddOrEditDesk(string deskNum, string deskDesc)
+        public bool AddOrEditDesk(string deskNum, string deskDesc)
         {
             using (var db = new OrderDB())
             {
@@ -418,6 +418,7 @@ namespace OrderApi.Controllers
                     db.Update(desk);
                 }
             }
+            return true;
         }
     }
 }

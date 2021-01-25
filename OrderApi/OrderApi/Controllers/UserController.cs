@@ -37,7 +37,7 @@ namespace OrderApi.Controllers
 
 
         [HttpPost]
-        public void AddShop(JToken jt)
+        public bool AddShop(JToken jt)
         {
             using (var db = new OrderDB())
             {
@@ -68,7 +68,7 @@ namespace OrderApi.Controllers
                     m.PASSWORD = password;
                     m.TEL = tel;
                     m.IsAdmin = "N";
-                    foreach(var url in urls)
+                    foreach (var url in urls)
                     {
                         var u = new IMAGE
                         {
@@ -84,18 +84,20 @@ namespace OrderApi.Controllers
                     db.Insert(m);
                     db.CommitTransaction();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     db.RollbackTransaction();
                     throw ex;
                 }
+
+                return true;
             }
             
         }
 
         [HttpPost]
         [Auth]
-        public void EditShop(JToken jt)
+        public bool EditShop(JToken jt)
         {
             using (var db = new OrderDB())
             {
@@ -148,6 +150,7 @@ namespace OrderApi.Controllers
                     db.RollbackTransaction();
                     throw ex;
                 }
+                return true;
             }
 
         }
