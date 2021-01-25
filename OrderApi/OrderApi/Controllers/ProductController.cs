@@ -18,15 +18,15 @@ namespace OrderApi.Controllers
         [HttpGet]
         public object GetProductList(string account)
         {
-            using(var db = new OrderDB())
+            using (var db = new OrderDB())
             {
                 var result = from p in db.Shops
-                             from type in db.FoodTypes.LeftJoin(pr=> pr.ShopId == p.ID)
-                             from food in db.Foods.LeftJoin(pr=> pr.TypeId == type.ID)
-                             from dtl in db.FoodDetails.LeftJoin(pr=> pr.FoodId == food.ID) 
-                             from shopImg in db.Images.LeftJoin(pr=>pr.ConnectId == p.ID)
-                             from img in db.Images.LeftJoin(pr=>pr.ConnectId == dtl.ID)
-                             from foodImg in db.Images.LeftJoin(pr=> pr.ConnectId == food.ID)
+                             from type in db.FoodTypes.LeftJoin(pr => pr.ShopId == p.ID)
+                             from food in db.Foods.LeftJoin(pr => pr.TypeId == type.ID)
+                             from dtl in db.FoodDetails.LeftJoin(pr => pr.FoodId == food.ID)
+                             from shopImg in db.Images.LeftJoin(pr => pr.ConnectId == p.ID)
+                             from img in db.Images.LeftJoin(pr => pr.ConnectId == dtl.ID)
+                             from foodImg in db.Images.LeftJoin(pr => pr.ConnectId == food.ID)
                              where p.ACCOUNT == account
                              select new
                              {
@@ -49,49 +49,49 @@ namespace OrderApi.Controllers
                                  img.URL,
                                  DETAIL_IMG_ID = img.ID
                              };
-                var rs = result.ToList().GroupBy(x => new { x.SHOP_NAME, x.SHOP_ID}).Select(x => new ProductModel
+                var rs = result.ToList().GroupBy(x => new { x.SHOP_NAME, x.SHOP_ID }).Select(x => new ProductModel
                 {
                     SHOP_NAME = x.Key.SHOP_NAME,
                     SHOP_ID = x.Key.SHOP_ID,
-                    Urls = x.GroupBy(c=>new { c.SHOP_IMG_ID, c.SHOP_IMG_URL }).Select(c=> new ProductImage
+                    Urls = x.GroupBy(c => new { c.SHOP_IMG_ID, c.SHOP_IMG_URL }).Select(c => new ProductImage
                     {
                         URL = c.Key.SHOP_IMG_URL,
                         IMG_ID = c.Key.SHOP_IMG_ID
                     }).ToList(),
                     TYPES = x.ToList().GroupBy(c => new { c.ICON, c.TypeName, c.TYPE_ID })
-                    .Select(c => new ProductType
-                    {
-                        TYPE_ID = c.Key.TYPE_ID,
-                        ICON = c.Key.ICON,
-                        TYPE_NAME = c.Key.TypeName,
-                        FOODS = c.GroupBy(z => new { z.NAME, z.TAG, z.FOOD_ID })
-                        .Select(z => new ProductFood
-                        {
-                            FOOD_ID = z.Key.FOOD_ID,
-                            FOOD_TAG = z.Key.TAG,
-                            FOOD_NAME = z.Key.NAME,
-                            Urls = z.GroupBy(d => new { d.FOOD_IMG_URL, d.FOOD_IMG_URL_ID })
-                            .Select(d=> new ProductImage
-                            {
-                                URL = d.Key.FOOD_IMG_URL,
-                                IMG_ID = d.Key.FOOD_IMG_URL_ID
-                            }).ToList(),
-                            FOOD_DETAIL = z.GroupBy(d => new { d.DETAIL_NAME, d.PRICE, d.DetailDesc, d.DETAIL_ID }).OrderBy(d=>d.Key.PRICE)
-                            .Select(d => new ProductDetail
-                            {
-                                DETAIL_ID = d.Key.DETAIL_ID,
-                                DETAIL_NAME = d.Key.DETAIL_NAME,
-                                DETAIL_DESC = d.Key.DetailDesc,
-                                DETAIL_PRICE = d.Key.PRICE ?? 0,
-                                Urls = d.GroupBy(y=> new { y.URL, y.DETAIL_IMG_ID })
-                                .Select(y=> new ProductImage
-                                {
-                                    IMG_ID = y.Key.DETAIL_IMG_ID,
-                                    URL = y.Key.URL
-                                }).ToList()
-                            }).ToList()
-                        }).ToList()
-                    }).ToList()
+                     .Select(c => new ProductType
+                     {
+                         TYPE_ID = c.Key.TYPE_ID,
+                         ICON = c.Key.ICON,
+                         TYPE_NAME = c.Key.TypeName,
+                         FOODS = c.Count(x => x.FOOD_ID != null) == 0 ? new List<ProductFood>() : c.GroupBy(z => new { z.NAME, z.TAG, z.FOOD_ID })
+                         .Select(z => new ProductFood
+                         {
+                             FOOD_ID = z.Key.FOOD_ID,
+                             FOOD_TAG = z.Key.TAG,
+                             FOOD_NAME = z.Key.NAME,
+                             Urls = z.GroupBy(d => new { d.FOOD_IMG_URL, d.FOOD_IMG_URL_ID })
+                             .Select(d => new ProductImage
+                             {
+                                 URL = d.Key.FOOD_IMG_URL,
+                                 IMG_ID = d.Key.FOOD_IMG_URL_ID
+                             }).ToList(),
+                             FOOD_DETAIL = z.GroupBy(d => new { d.DETAIL_NAME, d.PRICE, d.DetailDesc, d.DETAIL_ID }).OrderBy(d => d.Key.PRICE)
+                             .Select(d => new ProductDetail
+                             {
+                                 DETAIL_ID = d.Key.DETAIL_ID,
+                                 DETAIL_NAME = d.Key.DETAIL_NAME,
+                                 DETAIL_DESC = d.Key.DetailDesc,
+                                 DETAIL_PRICE = d.Key.PRICE ?? 0,
+                                 Urls = d.GroupBy(y => new { y.URL, y.DETAIL_IMG_ID })
+                                 .Select(y => new ProductImage
+                                 {
+                                     IMG_ID = y.Key.DETAIL_IMG_ID,
+                                     URL = y.Key.URL
+                                 }).ToList()
+                             }).ToList()
+                         }).ToList()
+                     }).ToList()
                 }).FirstOrDefault();
 
                 return rs;
@@ -104,12 +104,12 @@ namespace OrderApi.Controllers
         public object EditProduct(JToken jt)
         {
             var model = JsonConvert.DeserializeObject<EditProduct>(jt.ToString());
-            using(var db = new OrderDB())
+            using (var db = new OrderDB())
             {
                 db.BeginTransaction();
                 try
                 {
-                    
+
                     var food = (from p in db.Foods where model.Food.FOOD_ID == p.ID select p).FirstOrDefault();
                     food.TypeId = model.Type.TYPE_ID;
                     food.NAME = model.Food.FOOD_NAME;
@@ -118,7 +118,7 @@ namespace OrderApi.Controllers
                     food.UserModified = ACCOUNT;
                     db.Update(food);
                     //替换食物图片
-                    foreach(var id in model.Food.Urls)
+                    foreach (var id in model.Food.Urls)
                     {
                         var img = (from p in db.Images where id.IMG_ID == p.ID select p).FirstOrDefault();
                         img.DatetimeModified = DateTime.Now;
@@ -128,7 +128,7 @@ namespace OrderApi.Controllers
                     }
 
                     //更新明细
-                    foreach(var detail in model.Food.FOOD_DETAIL)
+                    foreach (var detail in model.Food.FOOD_DETAIL)
                     {
                         var dtl = (from p in db.FoodDetails where detail.DETAIL_ID == p.ID select p).FirstOrDefault();
                         dtl.DatetimeModified = DateTime.Now;
@@ -138,7 +138,7 @@ namespace OrderApi.Controllers
                         db.Update(dtl);
 
                         //更新明细图片
-                        foreach(var id in detail.Urls)
+                        foreach (var id in detail.Urls)
                         {
                             var img = (from p in db.Images where id.IMG_ID == p.ID select p).FirstOrDefault();
                             img.DatetimeModified = DateTime.Now;
@@ -150,7 +150,7 @@ namespace OrderApi.Controllers
 
                     db.CommitTransaction();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     db.RollbackTransaction();
                     throw ex;
@@ -186,7 +186,7 @@ namespace OrderApi.Controllers
                         img.ConnectId = food.ID;
                         db.Insert(img);
                     }
-                    
+
                     food.UserCreated = ACCOUNT;
                     food.DatetimeCreated = DateTime.Now;
                     food.STATE = 'A';
@@ -194,7 +194,7 @@ namespace OrderApi.Controllers
                     food.NAME = model.Food.FOOD_NAME;
                     food.TAG = model.Food.FOOD_TAG;
                     db.Insert(food);
-                    
+
 
                     //更新明细
                     foreach (var detail in model.Food.FOOD_DETAIL)
@@ -271,7 +271,7 @@ namespace OrderApi.Controllers
         public object PlaceAnOrder(JToken jt)
         {
             var model = JsonConvert.DeserializeObject<PlaceAnOrder>(jt.ToString());
-            using(var db = new OrderDB())
+            using (var db = new OrderDB())
             {
                 db.BeginTransaction();
                 try
@@ -322,7 +322,7 @@ namespace OrderApi.Controllers
                     db.CommitTransaction();
                     return model.OrderId;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     throw new Exception(ex.Message);
                     db.RollbackTransaction();
@@ -340,7 +340,7 @@ namespace OrderApi.Controllers
         [HttpGet]
         public bool DeskIsOccupied(string desckNum, string shopAcount)
         {
-            using(var db = new OrderDB())
+            using (var db = new OrderDB())
             {
                 var shopId = (from p in db.Shops where p.ACCOUNT == shopAcount select p).FirstOrDefault()?.ID;
                 var order = (from p in db.OrderHeads
@@ -380,7 +380,7 @@ namespace OrderApi.Controllers
         [Auth]
         public object GetDeskList()
         {
-            using(var db = new OrderDB())
+            using (var db = new OrderDB())
             {
                 var result = from p in db.ShopDesks where p.ShopId == SHOP_ID select p;
                 return result.ToList();
@@ -395,7 +395,7 @@ namespace OrderApi.Controllers
             using (var db = new OrderDB())
             {
                 var result = from p in db.ShopDesks where p.DeskCount == deskNum select p;
-                if(result is null || result.Count() == 0)
+                if (result is null || result.Count() == 0)
                 {
                     var deck = new ShopDesk()
                     {

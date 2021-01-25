@@ -144,6 +144,10 @@ namespace OrderApi
 		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
 		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
 		[Column("SHOP_ID"),              Nullable         ] public string    ShopId           { get; set; } // varchar(80)
+		[Column("DESC_NUM"),             Nullable         ] public string    DescNum          { get; set; } // varchar(80)
+		[Column("IS_CLOSE"),             Nullable         ] public char?     IsClose          { get; set; } // char(1)
+		[Column("IS_PRINT"),             Nullable         ] public char?     IsPrint          { get; set; } // char(1)
+		[Column("PERSON_NUM"),           Nullable         ] public decimal?  PersonNum        { get; set; } // decimal(18, 0)
 	}
 
 	[Table(Schema="dbo", Name="SHOP")]
@@ -158,7 +162,7 @@ namespace OrderApi
 		[Column(),                       Nullable         ] public string    NAME             { get; set; } // varchar(80)
 		[Column(),                       Nullable         ] public string    ADDRESS          { get; set; } // varchar(80)
 		[Column(),                       Nullable         ] public string    ACCOUNT          { get; set; } // varchar(80)
-		[Column(),                       Nullable         ] public decimal?  PASSWORD         { get; set; } // decimal(18, 0)
+		[Column(),                       Nullable         ] public string    PASSWORD         { get; set; } // varchar(80)
 		[Column(),                       Nullable         ] public string    TEL              { get; set; } // varchar(80)
 		[Column("IS_ADMIN"),             Nullable         ] public string    IsAdmin          { get; set; } // varchar(10)
 	}
