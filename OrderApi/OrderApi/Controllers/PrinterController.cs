@@ -2,32 +2,37 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using OrderApi.Domains;
 using OrderApi.MsgCommon;
 using System;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace OrderApi.Controllers
 {
-    [WebApi("order/[controller]/[action]")]
+    [WebApi]
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public class FoodController : BaseController
+    public class PrinterController : BaseController
     {
+
+        
         [HttpGet]
         [Auth]
-        public ActionResult<object> Get()
+        public bool AddPrinter(string snslist)
         {
-            using (var db = new OrderDB())
-            {
-                var query = from p in db.Shops select p;
-                return query.ToList();
-            }
+            PrinterDomain.Current.addprinter(snslist);
+            return true;
         }
 
-        [HttpGet]
-        public ActionResult<int> listById(int i)
-        {
-            return i + 1;
-        }
+
+        //public bool Print()
+        //{
+        //    PrinterDomain.Current.print()
+        //}
+
     }
 }

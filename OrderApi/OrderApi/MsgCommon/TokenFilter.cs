@@ -13,11 +13,13 @@ namespace OrderApi.MsgCommon
         {
             //tokenHelper = _tokenHelper;
         }
-       
+
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            var token = context.HttpContext.Request.Headers["Authorization"].ToString();
+            var req = context.HttpContext.Request;
+            var token = req.Headers["Authorization"].ToString();
+            //var token = context.HttpContext.Request.Headers["Authorization"].ToString();
             if (string.IsNullOrEmpty(token)) return;
             var tokenHandler = new JwtSecurityTokenHandler();
             var jt = tokenHandler.ReadJwtToken(token);

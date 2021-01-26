@@ -53,6 +53,7 @@ namespace OrderApi.Controllers
                     var account = jt["ACCOUNT"].ToString();
                     var password = jt["PASSWORD"].ToString();
                     var tel = jt["TEL"].ToString();
+                    var printer = jt["PRINTER"].ToString();
                     var urls = JsonConvert.DeserializeObject<List<IMAGE>>(jt["URLS"].ToString());
                     if (LoginDomain.Current.UserIsExsist(name))
                     {
@@ -67,6 +68,7 @@ namespace OrderApi.Controllers
                     m.ADDRESS = address;
                     m.PASSWORD = password;
                     m.TEL = tel;
+                    m.PrinterCode = printer;
                     m.IsAdmin = "N";
                     foreach (var url in urls)
                     {
@@ -109,6 +111,7 @@ namespace OrderApi.Controllers
                     var account = jt["ACCOUNT"].ToString();
                     var password = jt["PASSWORD"].ToString();
                     var tel = jt["TEL"].ToString();
+                    var printer = jt["PRINTER"].ToString();
                     var urls = JsonConvert.DeserializeObject<List<IMAGE>>(jt["URLS"].ToString());
                     var m = (from p in db.Shops where p.ACCOUNT == account select p).FirstOrDefault();
                     m.UserModified = ACCOUNT;
@@ -117,6 +120,7 @@ namespace OrderApi.Controllers
                     m.ACCOUNT = account;
                     m.ADDRESS = address;
                     m.PASSWORD = password;
+                    m.PrinterCode = printer;
                     m.TEL = tel;
                     foreach (var url in urls)
                     {

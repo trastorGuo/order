@@ -103,15 +103,12 @@
   "Account":"test01",
   "User": "trastor",
   "OrderId": "",//订单ID，第一次创建不传，子订单需要传
-<<<<<<< HEAD
   "DescNum":0 //桌号，第一次必传，子订单可不传
   "PersonNum":2//人数
    "IsPrint":"N"//是否打印，N,Y。默认Y
-=======
   "DescNum":"" //桌号，第一次必传，子订单可不传
   "PersonNum":2//人数
   "IsPrint":"N"//是否打印，N,Y。默认Y
->>>>>>> 5032c8f47498aec37041b4773c0f6a5710ee0dd3
 }
 //无TOKEN认证
 ````
@@ -127,6 +124,7 @@
     "ACCOUNT":"",
     "PASSWORD":"",
     "TEL":"",
+    "PRINTER":"",
     "URLS":[{
         "URL":""
     }]
@@ -144,6 +142,7 @@
     "ACCOUNT":"",//必填，为当前编辑的用户
     "PASSWORD":"",
     "TEL":"",
+    "PRINTER":"",
     "URLS":[{
         "ID":"",//有ID修改，无ID新增
         "URL":""

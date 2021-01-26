@@ -320,6 +320,7 @@ namespace OrderApi.Controllers
                         db.Insert(foodDetail);
                     }
                     db.CommitTransaction();
+                    PrinterDomain.Current.print(model);
                     return model.OrderId;
                 }
                 catch (Exception ex)
@@ -402,6 +403,7 @@ namespace OrderApi.Controllers
                         ID = Guid.NewGuid().ToString("N").ToUpper(),
                         DatetimeCreated = DateTime.Now,
                         STATE = 'A',
+                        ShopId = SHOP_ID,
                         UserCreated = ACCOUNT,
                         DeskCount = deskNum,
                         DescDesc = deskDesc
