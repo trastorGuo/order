@@ -211,6 +211,7 @@
     "ACCOUNT":"",
     "PASSWORD":"",
     "TEL":"",
+    "PrinterCode":"",
     "URLS":[{
         "ID":"",
         "URL":""

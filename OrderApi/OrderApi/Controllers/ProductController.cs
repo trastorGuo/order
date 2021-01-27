@@ -224,7 +224,7 @@ namespace OrderApi.Controllers
                         img.ID = Guid.NewGuid().ToString("N").ToUpper();
                         img.DatetimeCreated = DateTime.Now;
                         img.STATE = 'A';
-                        img.UserCreated = ACCOUNT = ACCOUNT;
+                        img.UserCreated = ACCOUNT;
                         img.URL = id.URL;
                         img.ConnectId = food.ID;
                         db.Insert(img);

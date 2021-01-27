@@ -177,6 +177,7 @@ namespace OrderApi.Controllers
                 }).ToList();
                 return new
                 {
+                    shopInfo.PrinterCode,
                     shopInfo.NAME,
                     shopInfo.ADDRESS,
                     shopInfo.ACCOUNT,
