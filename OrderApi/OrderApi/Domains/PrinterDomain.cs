@@ -116,15 +116,17 @@ namespace OrderApi.Domains
             var total = 0M;
             foreach (var ds in order.Foods)
             {
-                //foreach(var dtl in ds.DETAIL_ID)
-                //{
                 using (var db = new OrderDB())
                 {
-                    var foodName = (from p in db.FoodDetails where p.ID == ds.DETAIL_ID select p).FirstOrDefault();
-                    orderInfo += $"{foodName.NAME.PadRight(10, ' ')}{foodName.PRICE.ToString().PadRight(8, ' ')}{ds.NUM.ToString().PadRight(3, ' ')}{foodName.PRICE * ds.NUM}<BR>";
-                    total += foodName.PRICE ?? 0 * ds.NUM;
+                    var dtlName = (from p in db.FoodDetails where p.ID == ds.DETAIL_ID select p).FirstOrDefault();
+                    var food = (from p in db.Foods where p.ID == dtlName.FoodId select p).FirstOrDefault();
+                    var nm = $"{food.NAME}";
+                    if (dtlName.NAME != "null") nm += $"({dtlName.NAME})";
+
+                    orderInfo += $"{nm.PadLeft(11, ' ')}{decimal.Round(dtlName.PRICE.Value, 1),-8}{ds.NUM,-3}{decimal.Round(dtlName.PRICE.Value, 1) * ds.NUM}<BR>";
+                    total += decimal.Round((dtlName.PRICE.Value) * ds.NUM, 1);
                 }
-                //}
+
             }
             
             orderInfo += "--------------------------------<BR>";

@@ -44,6 +44,18 @@
 
 ````json
 {
+    "SEQ":1,
+    "ICON": "",
+    "TYPE_NAME": ""
+}
+//有TOKEN认证
+````
+
+### /api/Product/EditType
+
+```` json
+{
+    "SEQ":1,
     "ICON": "",
     "TYPE_NAME": ""
 }
@@ -103,10 +115,7 @@
   "Account":"test01",
   "User": "trastor",
   "OrderId": "",//订单ID，第一次创建不传，子订单需要传
-  "DescNum":0 //桌号，第一次必传，子订单可不传
-  "PersonNum":2//人数
-   "IsPrint":"N"//是否打印，N,Y。默认Y
-  "DescNum":"" //桌号，第一次必传，子订单可不传
+  "DescNum":"12" //桌号，第一次必传，子订单可不传
   "PersonNum":2//人数
   "IsPrint":"N"//是否打印，N,Y。默认Y
 }
@@ -149,6 +158,14 @@
     }]
 }
 ````
+
+
+
+
+
+
+
+
 
 ## GET
 
@@ -199,5 +216,23 @@
         "URL":""
     }]
 }
+````
+
+### /api/Product/DeleteProduct?id={0}
+
+```` json
+//删除明细和Food都用此API
+````
+
+### /api/Printer/AddPrinter?snslist={0}
+
+````json
+//添加打印机
+````
+
+### /api/Product/DeleteType?id={0}
+
+````json
+//删除类别
 ````
 

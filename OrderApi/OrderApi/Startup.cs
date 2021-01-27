@@ -41,6 +41,7 @@ namespace OrderApi
                 options.RespectBrowserAcceptHeader = true;
                 options.Filters.Add(typeof(CustomExceptionAttribute));
                 options.Filters.Add<TokenFilter>();
+                options.Filters.Add<QueryRequired>();
             });
 
             DataConnection.DefaultSettings = new Linq2dbSettings(Configuration);

@@ -15,6 +15,7 @@ namespace OrderApi.Models
 
     public class ProductType
     {
+        public int SEQ { get; set; }
         public string TYPE_ID { get; set; }
         public string ICON { get; set; }
         public string TYPE_NAME { get; set; }

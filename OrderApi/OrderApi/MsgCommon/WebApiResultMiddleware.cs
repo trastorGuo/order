@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-
+using Newtonsoft.Json;
+using OrderApi.Domains;
+using System.Collections.Generic;
 
 namespace MsgCommon
 {
@@ -12,9 +14,27 @@ namespace MsgCommon
             if (context.Result is ObjectResult)
             {
                 var objectResult = context.Result as ObjectResult;
+                var error = objectResult.Value as ValidationProblemDetails;
                 if (objectResult.Value == null)
                 {
                     context.Result = new ObjectResult(new SuccessResultModel (404,  "未找到资源",  true ));
+                }
+                else if(error != null && error.Errors != null && error.Errors.Count > 0)
+                {
+                    var list = new List<KeyValuePair<string, List<string>>>();
+                    foreach(var item in error.Errors)
+                    {
+                        
+                        var ky = new List<string>();
+                        foreach (var ds in item.Value)
+                        {
+                            ky.Add(ds);
+                        }
+                        var key = new KeyValuePair<string, List<string>>(item.Key, ky);
+                        list.Add(key);
+                    }
+                    LogsDomain.Current.Add("请求时错误", JsonConvert.SerializeObject(list));
+                    context.Result = new ObjectResult(new SuccessResultModel(400, "未找到资源", true));
                 }
                 else
                 {

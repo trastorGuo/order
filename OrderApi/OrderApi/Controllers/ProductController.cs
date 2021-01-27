@@ -21,13 +21,13 @@ namespace OrderApi.Controllers
             using (var db = new OrderDB())
             {
                 var result = from p in db.Shops
-                             from type in db.FoodTypes.LeftJoin(pr => pr.ShopId == p.ID)
-                             from food in db.Foods.LeftJoin(pr => pr.TypeId == type.ID)
-                             from dtl in db.FoodDetails.LeftJoin(pr => pr.FoodId == food.ID)
-                             from shopImg in db.Images.LeftJoin(pr => pr.ConnectId == p.ID)
-                             from img in db.Images.LeftJoin(pr => pr.ConnectId == dtl.ID)
-                             from foodImg in db.Images.LeftJoin(pr => pr.ConnectId == food.ID)
-                             where p.ACCOUNT == account
+                             from type in db.FoodTypes.LeftJoin(pr => pr.ShopId == p.ID && pr.STATE == 'A')
+                             from food in db.Foods.LeftJoin(pr => pr.TypeId == type.ID && pr.STATE == 'A')
+                             from dtl in db.FoodDetails.LeftJoin(pr => pr.FoodId == food.ID && pr.STATE == 'A')
+                             from shopImg in db.Images.LeftJoin(pr => pr.ConnectId == p.ID && pr.STATE == 'A')
+                             from img in db.Images.LeftJoin(pr => pr.ConnectId == dtl.ID && pr.STATE == 'A')
+                             from foodImg in db.Images.LeftJoin(pr => pr.ConnectId == food.ID && pr.STATE == 'A')
+                             where p.ACCOUNT == account && p.STATE == 'A'
                              select new
                              {
                                  SHOP_ID = p.ID,
@@ -37,6 +37,7 @@ namespace OrderApi.Controllers
                                  TYPE_ID = type.ID,
                                  type.ICON,
                                  type.TypeName,
+                                 type.SEQ,
                                  FOOD_ID = food.ID,
                                  food.NAME,
                                  FOOD_IMG_URL = foodImg.URL,
@@ -58,9 +59,10 @@ namespace OrderApi.Controllers
                         URL = c.Key.SHOP_IMG_URL,
                         IMG_ID = c.Key.SHOP_IMG_ID
                     }).ToList(),
-                    TYPES = x.ToList().GroupBy(c => new { c.ICON, c.TypeName, c.TYPE_ID })
+                    TYPES = x.ToList().GroupBy(c => new { c.ICON, c.TypeName, c.TYPE_ID, c.SEQ }).OrderBy(c=>c.Key.SEQ)
                      .Select(c => new ProductType
                      {
+                         SEQ = c.Key.SEQ,
                          TYPE_ID = c.Key.TYPE_ID,
                          ICON = c.Key.ICON,
                          TYPE_NAME = c.Key.TypeName,
@@ -110,7 +112,7 @@ namespace OrderApi.Controllers
                 try
                 {
 
-                    var food = (from p in db.Foods where model.Food.FOOD_ID == p.ID select p).FirstOrDefault();
+                    var food = (from p in db.Foods where model.Food.FOOD_ID == p.ID && p.STATE == 'A' select p).FirstOrDefault();
                     food.TypeId = model.Type.TYPE_ID;
                     food.NAME = model.Food.FOOD_NAME;
                     food.TAG = model.Food.FOOD_TAG;
@@ -120,7 +122,7 @@ namespace OrderApi.Controllers
                     //替换食物图片
                     foreach (var id in model.Food.Urls)
                     {
-                        var img = (from p in db.Images where id.IMG_ID == p.ID select p).FirstOrDefault();
+                        var img = (from p in db.Images where id.IMG_ID == p.ID && p.STATE == 'A' select p).FirstOrDefault();
                         img.DatetimeModified = DateTime.Now;
                         img.UserModified = ACCOUNT = ACCOUNT;
                         img.URL = id.URL;
@@ -130,7 +132,7 @@ namespace OrderApi.Controllers
                     //更新明细
                     foreach (var detail in model.Food.FOOD_DETAIL)
                     {
-                        var dtl = (from p in db.FoodDetails where detail.DETAIL_ID == p.ID select p).FirstOrDefault();
+                        var dtl = (from p in db.FoodDetails where detail.DETAIL_ID == p.ID && p.STATE == 'A' select p).FirstOrDefault();
                         dtl.DatetimeModified = DateTime.Now;
                         dtl.UserModified = ACCOUNT;
                         dtl.NAME = detail.DETAIL_NAME;
@@ -140,7 +142,7 @@ namespace OrderApi.Controllers
                         //更新明细图片
                         foreach (var id in detail.Urls)
                         {
-                            var img = (from p in db.Images where id.IMG_ID == p.ID select p).FirstOrDefault();
+                            var img = (from p in db.Images where id.IMG_ID == p.ID && p.STATE == 'A' select p).FirstOrDefault();
                             img.DatetimeModified = DateTime.Now;
                             img.UserModified = ACCOUNT = ACCOUNT;
                             img.URL = id.URL;
@@ -159,6 +161,47 @@ namespace OrderApi.Controllers
                 return true;
             }
         }
+
+        [HttpGet]
+        [Auth]
+        public object DeleteProduct(string id)
+        {
+            using (var db = new OrderDB())
+            {
+                db.BeginTransaction();
+                try
+                {
+                    //先删除明细
+                    var dtl = (from p in db.FoodDetails where p.ID == id && p.STATE == 'A' select p).FirstOrDefault();
+                    var food = (from p in db.Foods where p.ID == id && p.STATE == 'A' select p).FirstOrDefault();
+                    if(dtl != null)
+                    {
+                        dtl.STATE = 'A';
+                        db.Update(dtl);
+                    }
+                    if(food != null)
+                    {
+                        var count = (from p in db.FoodDetails where p.ID == id && p.STATE == 'A' select p).Count();
+                        if (count > 0) throw new Exception("请先删除明细");
+                        else
+                        {
+                            food.STATE = 'A';
+                            db.Update(food);
+                        }
+                    }
+                    
+                    db.CommitTransaction();
+                }
+                catch (Exception ex)
+                {
+                    db.RollbackTransaction();
+                    throw ex;
+                }
+
+                return true;
+            }
+        }
+
 
 
 
@@ -236,6 +279,7 @@ namespace OrderApi.Controllers
         }
 
         [HttpPost]
+        [Auth]
         public object AddType(JToken jt)
         {
             var model = JsonConvert.DeserializeObject<ProductType>(jt.ToString());
@@ -244,6 +288,12 @@ namespace OrderApi.Controllers
                 db.BeginTransaction();
                 try
                 {
+                    //更新
+                    db.FoodTypes
+                        .Where(c => c.SEQ >= model.SEQ && c.ShopId == SHOP_ID && c.STATE == 'A')
+                        .Set(c => c.SEQ, c => c.SEQ + 1)
+                        .Update();
+
                     var type = new FoodType();
                     type.ID = Guid.NewGuid().ToString("N").ToUpper();
                     type.DatetimeCreated = DateTime.Now;
@@ -252,6 +302,7 @@ namespace OrderApi.Controllers
                     type.ShopId = SHOP_ID;
                     type.TypeName = model.TYPE_NAME;
                     type.STATE = 'A';
+                    type.SEQ = model.SEQ;
                     db.Insert(type);
 
                     db.CommitTransaction();
@@ -266,6 +317,70 @@ namespace OrderApi.Controllers
             }
         }
 
+        [HttpPost]
+        [Auth]
+        public object EditType(JToken jt)
+        {
+            var model = JsonConvert.DeserializeObject<ProductType>(jt.ToString());
+            using (var db = new OrderDB())
+            {
+                db.BeginTransaction();
+                try
+                {
+                    var curType = (from p in db.FoodTypes where p.ShopId == SHOP_ID && p.ID == model.TYPE_ID && p.STATE == 'A' select p).FirstOrDefault();
+                    var changeType = (from p in db.FoodTypes where p.ShopId == SHOP_ID && p.SEQ == model.SEQ && p.STATE == 'A' select p).FirstOrDefault();
+                    changeType.SEQ = curType.SEQ;
+                    curType.SEQ = model.SEQ;
+
+                    curType.TypeName = model.TYPE_NAME;
+                    curType.ICON = model.ICON;
+                    curType.DatetimeModified = DateTime.Now;
+                    curType.UserModified = ACCOUNT;
+
+                    db.Update(curType);
+                    db.Update(changeType);
+
+                    db.CommitTransaction();
+                }
+                catch (Exception ex)
+                {
+                    db.RollbackTransaction();
+                    throw ex;
+                }
+
+                return true;
+            }
+        }
+
+        [HttpGet]
+        [Auth]
+        public object DeleteType(string id)
+        {
+            using (var db = new OrderDB())
+            {
+                db.BeginTransaction();
+                try
+                {
+                    var curType = (from p in db.FoodTypes where p.ID == id select p).FirstOrDefault();
+                    curType.STATE = 'D';
+                    
+                    db.FoodTypes
+                        .Where(c => c.SEQ > curType.SEQ && c.ShopId == SHOP_ID && c.STATE == 'A')
+                        .Set(c => c.SEQ, c => c.SEQ - 1)
+                        .Update();
+
+                    db.Update(curType);
+                    db.CommitTransaction();
+                }
+                catch (Exception ex)
+                {
+                    db.RollbackTransaction();
+                    throw ex;
+                }
+
+                return true;
+            }
+        }
 
         [HttpPost]
         public object PlaceAnOrder(JToken jt)
@@ -320,8 +435,12 @@ namespace OrderApi.Controllers
                         db.Insert(foodDetail);
                     }
                     db.CommitTransaction();
-                    PrinterDomain.Current.print(model);
-                    return model.OrderId;
+                    var msg = PrinterDomain.Current.print(model);
+                    return new
+                    {
+                        OrderId = model.OrderId,
+                        PrintMsg = msg
+                    };
                 }
                 catch (Exception ex)
                 {
