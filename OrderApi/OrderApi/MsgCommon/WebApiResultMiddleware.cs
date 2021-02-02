@@ -33,7 +33,7 @@ namespace MsgCommon
                         var key = new KeyValuePair<string, List<string>>(item.Key, ky);
                         list.Add(key);
                     }
-                    LogsDomain.Current.Add("请求时错误", JsonConvert.SerializeObject(list));
+                    LogsDomain.Current.Add(context.ActionDescriptor.DisplayName, "请求时错误", JsonConvert.SerializeObject(list));
                     context.Result = new ObjectResult(new SuccessResultModel(400, "未找到资源", true));
                 }
                 else
@@ -65,7 +65,7 @@ namespace MsgCommon
             object result = null, bool success = false)
         {
             this.success = success;
-            this.code = code;
+            this.code = 200;
             this.data = result;
             //this.message.content = message;
         }

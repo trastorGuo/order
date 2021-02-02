@@ -48,13 +48,22 @@ namespace OrderApi.Controllers
                     {
                         throw new Exception("当前用户无管理员权限!");
                     }
-                    var name = jt["NAME"].ToString();
-                    var address = jt["ADDRESS"].ToString();
-                    var account = jt["ACCOUNT"].ToString();
-                    var password = jt["PASSWORD"].ToString();
-                    var tel = jt["TEL"].ToString();
-                    var printer = jt["PRINTER"].ToString();
-                    var urls = JsonConvert.DeserializeObject<List<IMAGE>>(jt["URLS"].ToString());
+                    var name = jt["NAME"]?.ToString();
+                    var address = jt["ADDRESS"]?.ToString();
+                    var account = jt["ACCOUNT"]?.ToString();
+                    var password = jt["PASSWORD"]?.ToString();
+                    var tel = jt["TEL"]?.ToString();
+                    var printer = jt["PRINTER"]?.ToString();
+                    var urls = new List<IMAGE>();
+                    if(jt["URLS"]?.ToString() != null) urls = JsonConvert.DeserializeObject<List<IMAGE>>(jt["URLS"].ToString());
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        throw new Exception("商店名称不能为空！");
+                    }
+                    if(string.IsNullOrEmpty(account) || string.IsNullOrEmpty(password))
+                    {
+                        throw new Exception("账号、密码不能为空");
+                    }
                     if (LoginDomain.Current.UserIsExsist(name))
                     {
                         throw new Exception("名称已存在！");
@@ -64,6 +73,7 @@ namespace OrderApi.Controllers
                     m.UserCreated = ACCOUNT;
                     m.DatetimeCreated = DateTime.Now;
                     m.STATE = 'A';
+                    m.NAME = name;
                     m.ACCOUNT = account;
                     m.ADDRESS = address;
                     m.PASSWORD = password;
@@ -106,17 +116,18 @@ namespace OrderApi.Controllers
                 db.BeginTransaction();
                 try
                 {
-                    var name = jt["NAME"].ToString();
-                    var address = jt["ADDRESS"].ToString();
-                    var account = jt["ACCOUNT"].ToString();
-                    var password = jt["PASSWORD"].ToString();
-                    var tel = jt["TEL"].ToString();
-                    var printer = jt["PRINTER"].ToString();
+                    var name = jt["NAME"]?.ToString();
+                    var address = jt["ADDRESS"]?.ToString();
+                    var account = jt["ACCOUNT"]?.ToString();
+                    var password = jt["PASSWORD"]?.ToString();
+                    var tel = jt["TEL"]?.ToString();
+                    var printer = jt["PRINTER"]?.ToString();
                     var urls = JsonConvert.DeserializeObject<List<IMAGE>>(jt["URLS"].ToString());
                     var m = (from p in db.Shops where p.ACCOUNT == account select p).FirstOrDefault();
                     m.UserModified = ACCOUNT;
                     m.DatetimeModified = DateTime.Now;
                     m.STATE = 'A';
+                    m.NAME = name;
                     m.ACCOUNT = account;
                     m.ADDRESS = address;
                     m.PASSWORD = password;
@@ -184,7 +195,8 @@ namespace OrderApi.Controllers
                     shopInfo.PASSWORD,
                     shopInfo.TEL,
                     URLS = urls,
-                    DeskList
+                    DeskList,
+                    IS_ADMIN = shopInfo.IsAdmin == "Y"
                 };
             }
         }

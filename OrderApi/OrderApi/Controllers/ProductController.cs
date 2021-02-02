@@ -37,7 +37,7 @@ namespace OrderApi.Controllers
                                  TYPE_ID = type.ID,
                                  type.ICON,
                                  type.TypeName,
-                                 type.SEQ,
+                                 SEQ = type == null ? (int?)(null) : type.SEQ,
                                  FOOD_ID = food.ID,
                                  food.NAME,
                                  FOOD_IMG_URL = foodImg.URL,
@@ -54,12 +54,12 @@ namespace OrderApi.Controllers
                 {
                     SHOP_NAME = x.Key.SHOP_NAME,
                     SHOP_ID = x.Key.SHOP_ID,
-                    Urls = x.GroupBy(c => new { c.SHOP_IMG_ID, c.SHOP_IMG_URL }).Select(c => new ProductImage
+                    Urls = result.All(c=>c.SHOP_IMG_ID == null) ? new List<ProductImage>() : x.GroupBy(c => new { c.SHOP_IMG_ID, c.SHOP_IMG_URL }).Select(c => new ProductImage
                     {
                         URL = c.Key.SHOP_IMG_URL,
                         IMG_ID = c.Key.SHOP_IMG_ID
                     }).ToList(),
-                    TYPES = x.ToList().GroupBy(c => new { c.ICON, c.TypeName, c.TYPE_ID, c.SEQ }).OrderBy(c=>c.Key.SEQ)
+                    TYPES = x.All(c=>c.TYPE_ID == null) ? new List<ProductType>() : x.ToList().GroupBy(c => new { c.ICON, c.TypeName, c.TYPE_ID, c.SEQ }).OrderBy(c=>c.Key.SEQ)
                      .Select(c => new ProductType
                      {
                          SEQ = c.Key.SEQ,
@@ -72,20 +72,20 @@ namespace OrderApi.Controllers
                              FOOD_ID = z.Key.FOOD_ID,
                              FOOD_TAG = z.Key.TAG,
                              FOOD_NAME = z.Key.NAME,
-                             Urls = z.GroupBy(d => new { d.FOOD_IMG_URL, d.FOOD_IMG_URL_ID })
+                             Urls = z.All(d=>d.FOOD_IMG_URL_ID == null) ? new List<ProductImage>() : z.GroupBy(d => new { d.FOOD_IMG_URL, d.FOOD_IMG_URL_ID })
                              .Select(d => new ProductImage
                              {
                                  URL = d.Key.FOOD_IMG_URL,
                                  IMG_ID = d.Key.FOOD_IMG_URL_ID
                              }).ToList(),
-                             FOOD_DETAIL = z.GroupBy(d => new { d.DETAIL_NAME, d.PRICE, d.DetailDesc, d.DETAIL_ID }).OrderBy(d => d.Key.PRICE)
+                             FOOD_DETAIL = z.All(d=>d.DETAIL_ID == null) ? new List<ProductDetail>() : z.GroupBy(d => new { d.DETAIL_NAME, d.PRICE, d.DetailDesc, d.DETAIL_ID }).OrderBy(d => d.Key.PRICE)
                              .Select(d => new ProductDetail
                              {
                                  DETAIL_ID = d.Key.DETAIL_ID,
                                  DETAIL_NAME = d.Key.DETAIL_NAME,
                                  DETAIL_DESC = d.Key.DetailDesc,
                                  DETAIL_PRICE = d.Key.PRICE ?? 0,
-                                 Urls = d.GroupBy(y => new { y.URL, y.DETAIL_IMG_ID })
+                                 Urls = d.All(y=>y.DETAIL_IMG_ID == null) ? new List<ProductImage>() : d.GroupBy(y => new { y.URL, y.DETAIL_IMG_ID })
                                  .Select(y => new ProductImage
                                  {
                                      IMG_ID = y.Key.DETAIL_IMG_ID,
@@ -113,6 +113,14 @@ namespace OrderApi.Controllers
                 {
 
                     var food = (from p in db.Foods where model.Food.FOOD_ID == p.ID && p.STATE == 'A' select p).FirstOrDefault();
+                    if(food is null)
+                    {
+                        throw new Exception($"找不到商品ID:{model.Food.FOOD_ID}");
+                    }
+                    if (string.IsNullOrEmpty(model.Type.TYPE_ID))
+                    {
+                        throw new Exception("商品类别ID不能为空！");
+                    }
                     food.TypeId = model.Type.TYPE_ID;
                     food.NAME = model.Food.FOOD_NAME;
                     food.TAG = model.Food.FOOD_TAG;
@@ -123,30 +131,48 @@ namespace OrderApi.Controllers
                     foreach (var id in model.Food.Urls)
                     {
                         var img = (from p in db.Images where id.IMG_ID == p.ID && p.STATE == 'A' select p).FirstOrDefault();
+                        if (img is null) continue;
                         img.DatetimeModified = DateTime.Now;
-                        img.UserModified = ACCOUNT = ACCOUNT;
+                        img.UserModified = ACCOUNT;
                         img.URL = id.URL;
                         db.Update(img);
                     }
 
+                    //先删除明细，再新增
+                    var ids = model.Food.FOOD_DETAIL.Select(x => x.DETAIL_ID);
+                    db.FoodDetails.Where(x => x.FoodId == food.ID).Delete();
+                    //删除明细图片
+                    db.Images.Where(x => ids.Contains(x.ConnectId)).Delete();
+
                     //更新明细
                     foreach (var detail in model.Food.FOOD_DETAIL)
                     {
-                        var dtl = (from p in db.FoodDetails where detail.DETAIL_ID == p.ID && p.STATE == 'A' select p).FirstOrDefault();
-                        dtl.DatetimeModified = DateTime.Now;
-                        dtl.UserModified = ACCOUNT;
+                        if(model.Food.FOOD_DETAIL.Count(x=>x.DETAIL_NAME == detail.DETAIL_NAME) >= 2)
+                        {
+                            throw new Exception("商品明细不能重复！");
+                        }
+                        var dtl = new FoodDetail();
+                        dtl.ID = Guid.NewGuid().ToString("N").ToUpper();
+                        dtl.DatetimeCreated = DateTime.Now;
+                        dtl.UserCreated = ACCOUNT;
+                        dtl.STATE = 'A';
+                        dtl.FoodId = food.ID;
                         dtl.NAME = detail.DETAIL_NAME;
                         dtl.PRICE = detail.DETAIL_PRICE;
-                        db.Update(dtl);
+                        dtl.DetailDesc = detail.DETAIL_DESC;
+                        db.Insert(dtl);
 
                         //更新明细图片
                         foreach (var id in detail.Urls)
                         {
-                            var img = (from p in db.Images where id.IMG_ID == p.ID && p.STATE == 'A' select p).FirstOrDefault();
-                            img.DatetimeModified = DateTime.Now;
-                            img.UserModified = ACCOUNT = ACCOUNT;
+                            var img = new IMAGE();
+                            img.ID = Guid.NewGuid().ToString("N").ToUpper();
+                            img.STATE = 'A';
+                            img.DatetimeCreated = DateTime.Now;
+                            img.UserCreated = ACCOUNT;
+                            img.ConnectId = dtl.ID;
                             img.URL = id.URL;
-                            db.Update(img);
+                            db.Insert(img);
                         }
                     }
 
@@ -203,31 +229,46 @@ namespace OrderApi.Controllers
         }
 
 
-
-
         [Auth]
         [HttpPost]
         public object AddProduct(JToken jt)
         {
             var model = JsonConvert.DeserializeObject<EditProduct>(jt.ToString());
+            if (string.IsNullOrEmpty(model.Type.TYPE_ID))
+            {
+                throw new Exception("类型ID为空！");
+            }
+            if (string.IsNullOrEmpty(model.Food.FOOD_NAME))
+            {
+                throw new Exception("商品名称不能为空！");
+            }
+            
             using (var db = new OrderDB())
             {
                 db.BeginTransaction();
                 try
                 {
+                    var count = (from p in db.Foods where p.NAME == model.Food.FOOD_NAME && p.STATE == 'A' && p.TypeId == model.Type.TYPE_ID select p).Count();
+                    if(count > 0)
+                    {
+                        throw new Exception("当前商品已存在");
+                    }
                     var food = new FOOD();
                     food.ID = Guid.NewGuid().ToString("N").ToUpper();
                     //插入食物图片
-                    foreach (var id in model.Food.Urls)
+                    if (model.Food.Urls != null && model.Food.Urls.Count > 0)
                     {
-                        var img = new IMAGE();
-                        img.ID = Guid.NewGuid().ToString("N").ToUpper();
-                        img.DatetimeCreated = DateTime.Now;
-                        img.STATE = 'A';
-                        img.UserCreated = ACCOUNT;
-                        img.URL = id.URL;
-                        img.ConnectId = food.ID;
-                        db.Insert(img);
+                        foreach (var id in model.Food.Urls)
+                        {
+                            var img = new IMAGE();
+                            img.ID = Guid.NewGuid().ToString("N").ToUpper();
+                            img.DatetimeCreated = DateTime.Now;
+                            img.STATE = 'A';
+                            img.UserCreated = ACCOUNT;
+                            img.URL = id.URL;
+                            img.ConnectId = food.ID;
+                            db.Insert(img);
+                        }
                     }
 
                     food.UserCreated = ACCOUNT;
@@ -238,31 +279,37 @@ namespace OrderApi.Controllers
                     food.TAG = model.Food.FOOD_TAG;
                     db.Insert(food);
 
-
-                    //更新明细
-                    foreach (var detail in model.Food.FOOD_DETAIL)
+                    if (model.Food.FOOD_DETAIL != null && model.Food.FOOD_DETAIL.Count > 0)
                     {
-                        var dtl = new FoodDetail();
-                        dtl.ID = Guid.NewGuid().ToString("N").ToUpper();
-                        dtl.DatetimeCreated = DateTime.Now;
-                        dtl.UserCreated = ACCOUNT;
-                        dtl.FoodId = food.ID;
-                        dtl.NAME = detail.DETAIL_NAME;
-                        dtl.PRICE = detail.DETAIL_PRICE;
-                        dtl.STATE = 'A';
-                        db.Insert(dtl);
-
-                        //更新明细图片
-                        foreach (var id in detail.Urls)
+                        //新增明细
+                        foreach (var detail in model.Food.FOOD_DETAIL)
                         {
-                            var img = new IMAGE();
-                            img.ID = Guid.NewGuid().ToString("N").ToUpper();
-                            img.DatetimeCreated = DateTime.Now;
-                            img.UserCreated = ACCOUNT = ACCOUNT;
-                            img.ConnectId = dtl.ID;
-                            img.URL = id.URL;
-                            img.STATE = 'A';
-                            db.Insert(img);
+                            if (model.Food.FOOD_DETAIL.Count(x => x.DETAIL_NAME == detail.DETAIL_NAME) >= 2)
+                            {
+                                throw new Exception("商品明细不能重复!");
+                            }
+                            var dtl = new FoodDetail();
+                            dtl.ID = Guid.NewGuid().ToString("N").ToUpper();
+                            dtl.DatetimeCreated = DateTime.Now;
+                            dtl.UserCreated = ACCOUNT;
+                            dtl.FoodId = food.ID;
+                            dtl.NAME = detail.DETAIL_NAME;
+                            dtl.PRICE = detail.DETAIL_PRICE;
+                            dtl.STATE = 'A';
+                            db.Insert(dtl);
+
+                            //新增明细图片
+                            foreach (var id in detail.Urls)
+                            {
+                                var img = new IMAGE();
+                                img.ID = Guid.NewGuid().ToString("N").ToUpper();
+                                img.DatetimeCreated = DateTime.Now;
+                                img.UserCreated = ACCOUNT;
+                                img.ConnectId = dtl.ID;
+                                img.URL = id.URL;
+                                img.STATE = 'A';
+                                db.Insert(img);
+                            }
                         }
                     }
 
@@ -288,12 +335,21 @@ namespace OrderApi.Controllers
                 db.BeginTransaction();
                 try
                 {
+                    if (string.IsNullOrEmpty(model.TYPE_NAME))
+                    {
+                        throw new Exception("类别名称不能为空！");
+                    }
                     //更新
                     db.FoodTypes
                         .Where(c => c.SEQ >= model.SEQ && c.ShopId == SHOP_ID && c.STATE == 'A')
                         .Set(c => c.SEQ, c => c.SEQ + 1)
                         .Update();
 
+                    var repeat = (from p in db.FoodTypes where p.ShopId == SHOP_ID && p.TypeName == model.TYPE_NAME && p.STATE == 'A' select p).FirstOrDefault();
+                    if(repeat != null)
+                    {
+                        throw new Exception($"当前分类{model.TYPE_NAME}已存在！");
+                    }
                     var type = new FoodType();
                     type.ID = Guid.NewGuid().ToString("N").ToUpper();
                     type.DatetimeCreated = DateTime.Now;
@@ -302,7 +358,7 @@ namespace OrderApi.Controllers
                     type.ShopId = SHOP_ID;
                     type.TypeName = model.TYPE_NAME;
                     type.STATE = 'A';
-                    type.SEQ = model.SEQ;
+                    type.SEQ = model.SEQ ?? 0;
                     db.Insert(type);
 
                     db.CommitTransaction();
@@ -329,8 +385,12 @@ namespace OrderApi.Controllers
                 {
                     var curType = (from p in db.FoodTypes where p.ShopId == SHOP_ID && p.ID == model.TYPE_ID && p.STATE == 'A' select p).FirstOrDefault();
                     var changeType = (from p in db.FoodTypes where p.ShopId == SHOP_ID && p.SEQ == model.SEQ && p.STATE == 'A' select p).FirstOrDefault();
+                    if(curType is null || changeType is null)
+                    {
+                        throw new Exception("交换失败!");
+                    }
                     changeType.SEQ = curType.SEQ;
-                    curType.SEQ = model.SEQ;
+                    curType.SEQ = model.SEQ ?? 0;
 
                     curType.TypeName = model.TYPE_NAME;
                     curType.ICON = model.ICON;
@@ -362,6 +422,10 @@ namespace OrderApi.Controllers
                 try
                 {
                     var curType = (from p in db.FoodTypes where p.ID == id select p).FirstOrDefault();
+                    if(curType is null)
+                    {
+                        throw new Exception("当前类别不存在！");
+                    }
                     curType.STATE = 'D';
                     
                     db.FoodTypes
@@ -391,7 +455,7 @@ namespace OrderApi.Controllers
                 db.BeginTransaction();
                 try
                 {
-                    var shopId = (from p in db.Shops where p.ACCOUNT == model.Account select p).FirstOrDefault()?.ID;
+                    var shopId = (from p in db.Shops where p.ACCOUNT == model.Account select p).FirstOrDefault();
                     if (string.IsNullOrEmpty(model.OrderId))
                     {
                         var head = new OrderHead()
@@ -399,7 +463,7 @@ namespace OrderApi.Controllers
                             ID = Guid.NewGuid().ToString("N").ToUpper(),
                             DatetimeCreated = DateTime.Now,
                             UserCreated = "custom",
-                            ShopId = shopId,
+                            ShopId = shopId?.ID,
                             STATE = 'A',
                             DescNum = model.DescNum,
                             IsClose = 'N'
@@ -421,6 +485,11 @@ namespace OrderApi.Controllers
 
                     foreach (var item in model.Foods)
                     {
+                        var detailName = (from p in db.FoodDetails where p.ID == item.DETAIL_ID select p).FirstOrDefault();
+                        if (string.IsNullOrEmpty(item.DETAIL_ID))
+                        {
+                            throw new Exception("存在商品明细无ID");
+                        }
                         var foodDetail = new OrderDetailFood()
                         {
                             ID = Guid.NewGuid().ToString("N").ToUpper(),
@@ -429,13 +498,18 @@ namespace OrderApi.Controllers
                             STATE = 'A',
                             UserOrder = model.User,
                             OrderDetailId = orderDetail.ID,
-                            FoodDetailId = item.DETAIL_ID,
-                            QTY = item.NUM
+                            FoodDetailName = detailName.NAME,
+                            QTY = item.NUM,
+                            Price = detailName.PRICE ?? 0
                         };
                         db.Insert(foodDetail);
                     }
                     db.CommitTransaction();
-                    var msg = PrinterDomain.Current.print(model);
+                    var msg = "";
+                    if (!string.IsNullOrEmpty(shopId.PrinterCode) && model.IsPrint == "Y")
+                    {
+                        msg = PrinterDomain.Current.print(model);
+                    }
                     return new
                     {
                         OrderId = model.OrderId,
@@ -447,6 +521,59 @@ namespace OrderApi.Controllers
                     throw new Exception(ex.Message);
                     db.RollbackTransaction();
                 }
+            }
+        }
+
+
+        [HttpGet]
+        [Auth]
+        public object GetOrders(string id, string datetime, string to, string userOrdered)
+        {
+            
+            using(var db = new OrderDB())
+            {
+                var iquery = from order in db.OrderHeads
+                             from dtl in db.OrderDetails.LeftJoin(pr => pr.PrrentOrderId == order.ID && pr.STATE == order.STATE)
+                             from food in db.OrderDetailFoods.LeftJoin(pr => pr.OrderDetailId == dtl.ID && pr.STATE == order.STATE)
+                             where (string.IsNullOrEmpty(id) ? order.STATE == 'A' : order.ID == id)
+                             && (string.IsNullOrEmpty(datetime) ? order.STATE == 'A' : order.DatetimeCreated >= Convert.ToDateTime(datetime))
+                             && (string.IsNullOrEmpty(to) ? order.STATE == 'A' : order.DatetimeCreated <= Convert.ToDateTime(to))
+                             && (string.IsNullOrEmpty(userOrdered) ? order.STATE == 'A' : food.UserOrder == userOrdered)
+                             && order.STATE == 'A'
+                             select new
+                             {
+                                 ORDER_ID = order.ID,
+                                 IS_CLOSE = order.IsClose,
+                                 IS_PRINT = order.IsPrint,
+                                 PERSON_NUM = order.PersonNum,
+                                 DESC_NUM = order.DescNum,
+                                 ORDER_DETAIL_ID = food.OrderDetailId,
+                                 food.QTY,
+                                 USER_ORDER = food.UserOrder,
+                                 FOOD_DETAIL_NAME = food.FoodDetailName,
+                                 PRICE = food.Price
+                             };
+
+                var result = iquery.AsEnumerable().GroupBy(x => new { x.ORDER_ID, x.IS_CLOSE, x.IS_PRINT, x.PERSON_NUM, x.DESC_NUM })
+                    .Select(x => new
+                    {
+                        x.Key.ORDER_ID,
+                        x.Key.IS_PRINT,
+                        x.Key.IS_CLOSE,
+                        x.Key.PERSON_NUM,
+                        x.Key.DESC_NUM,
+                        DTL = x.ToList().GroupBy(c => new { c.ORDER_DETAIL_ID, c.QTY, c.USER_ORDER, c.FOOD_DETAIL_NAME, c.PRICE })
+                        .Select(c => new
+                        {
+                            c.Key.ORDER_DETAIL_ID,
+                            c.Key.QTY,
+                            c.Key.USER_ORDER,
+                            c.Key.FOOD_DETAIL_NAME,
+                            c.Key.PRICE
+                        }).ToList()
+                    }).ToList();
+
+                return result;
             }
         }
 
@@ -470,7 +597,6 @@ namespace OrderApi.Controllers
                 return order != null && order.IsClose == 'N';
             }
         }
-
 
 
         [HttpGet]
@@ -510,11 +636,11 @@ namespace OrderApi.Controllers
 
         [HttpGet]
         [Auth]
-        public bool AddOrEditDesk(string deskNum, string deskDesc)
+        public string AddOrEditDesk(string deskNum, string deskDesc)
         {
             using (var db = new OrderDB())
             {
-                var result = from p in db.ShopDesks where p.DeskCount == deskNum select p;
+                var result = from p in db.ShopDesks where p.DeskCount == deskNum && p.ShopId == SHOP_ID && p.STATE == 'A' select p;
                 if (result is null || result.Count() == 0)
                 {
                     var deck = new ShopDesk()
@@ -528,6 +654,7 @@ namespace OrderApi.Controllers
                         DescDesc = deskDesc
                     };
                     db.Insert(deck);
+                    return "新增成功";
                 }
                 else
                 {
@@ -537,9 +664,9 @@ namespace OrderApi.Controllers
                     desk.DeskCount = deskNum;
                     desk.DescDesc = deskDesc;
                     db.Update(desk);
+                    return "修改成功";
                 }
             }
-            return true;
         }
     }
 }

@@ -11,7 +11,7 @@ namespace OrderApi.Domains
         private static LogsDomain _current;
         public static LogsDomain Current = _current ?? new LogsDomain();
 
-        public void Add(string request, string response, string user = "SYS")
+        public void Add(string action, string request, string response, string user = "SYS")
         {
             using(var db = new OrderDB())
             {
@@ -20,6 +20,7 @@ namespace OrderApi.Domains
                 info.DatetimeCreated = DateTime.Now;
                 info.UserCreated = user;
                 info.STATE = 'A';
+                info.ACTION = action;
                 info.REQUEST = request;
                 info.RESPONSE = response;
                 db.Insert(info);

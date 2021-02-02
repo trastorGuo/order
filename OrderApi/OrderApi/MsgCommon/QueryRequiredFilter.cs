@@ -13,14 +13,16 @@ namespace OrderApi.MsgCommon
     {
         private string request { get; set; }
         private string response { get; set; }
+        private string action { get; set; }
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             var list = new List<KeyValuePair<string, string>>();
             foreach (var item in context.ActionArguments) {
-                var dt = new KeyValuePair<string, string>(item.Key.ToString(), item.Value.ToString());
+                var dt = new KeyValuePair<string, string>(item.Key?.ToString(), item.Value?.ToString());
                 list.Add(dt);
             }
             request = JsonConvert.SerializeObject(list);
+            action = context.ActionDescriptor.DisplayName;
         }
 
         public override void OnActionExecuted(ActionExecutedContext context)
@@ -30,7 +32,7 @@ namespace OrderApi.MsgCommon
                 response = context.Exception.Message;
             else response = JsonConvert.SerializeObject(result.Value);
 
-            LogsDomain.Current.Add(request, response);
+            LogsDomain.Current.Add(action, request, response);
         }
     }
 }

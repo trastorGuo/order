@@ -78,7 +78,7 @@
                 "DETAIL_ID": "",
                 "DETAIL_NAME": "",
                 "DETAIL_DESC": "",
-                "DETAIL_PRICE"0,
+                "DETAIL_PRICE" 0,
                 "Urls": [
                     {
                         "IMG_ID": "",
@@ -235,5 +235,11 @@
 
 ````json
 //删除类别
+````
+
+### /api/Product/GetOrders?id={0}&datetime={1}&to{2}&userOrdered={3}
+
+```` json
+//获取订单
 ````
 

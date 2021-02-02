@@ -12,6 +12,7 @@ namespace OrderApi.Models
         public string Account { get; set; }
         public string User { get; set; }
         public string DescNum { get; set; }
+        public string IsPrint { get; set; }
     }
 
     public class OrderDetail
