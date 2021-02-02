@@ -9,33 +9,42 @@ import 'vue-m-message/dist/index.css';
 import {
   http
 } from './components/common/http';
-import Food from './components/common/food';
+import fw from './components/common/framwork';
 import VuejsDialog from 'vuejs-dialog';
-// import VuejsDialogMixin from 'vuejs-dialog/dist/vuejs-dialog-mixin.min.js'; // only needed in custom components
-
+import * as qiniu from 'qiniu-js';
+import FileUpload from 'vue-upload-component'
 import 'vuejs-dialog/dist/vuejs-dialog.min.css';
+
+Vue.component('file-upload', FileUpload);
 Vue.use(VuejsDialog, {
   okText: '确认',
   cancelText: '取消',
 });
-Vue.use(Food);
 Vue.use(Message);
 Vue.config.productionTip = false;
 Vue.config.devtools = true;
 Vue.prototype.$http = http;
 Vue.prototype.$store = store;
+Vue.prototype.$fw = fw;
 
 router.beforeEach((to, from, next) => {
+  var token = window.localStorage.getItem("accessToken");
+  if (to.meta.needLogin && to.name != "Login" && (token == null || token == "")) {
+    next({
+      name: "Login"
+    });
+  }
   /* 路由发生变化修改页面title */
   if (to.meta.title) {
-    document.title = to.meta.title
+    document.title = to.meta.title;
   }
-  next()
+  next();
 })
 new Vue({
   el: '#app',
   router,
   store,
+  qiniu,
   components: {
     App
   },
