@@ -20,8 +20,8 @@ namespace OrderApi.Controllers
         public object GetToken()
         {
             PutPolicy putPolicy = new PutPolicy();
-            putPolicy.Scope = "csharpsdk" + ":" + "csharpsdk.qiniudn.com";
-            putPolicy.SetExpires(int.MaxValue);
+            putPolicy.Scope = "trastor";
+            putPolicy.SetExpires(3600);
             return SignWithData(putPolicy.ToJsonString());
         }
 

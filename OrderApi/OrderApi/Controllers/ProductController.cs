@@ -18,564 +18,81 @@ namespace OrderApi.Controllers
         [HttpGet]
         public object GetProductList(string account)
         {
-            using (var db = new OrderDB())
-            {
-                var result = from p in db.Shops
-                             from type in db.FoodTypes.LeftJoin(pr => pr.ShopId == p.ID && pr.STATE == 'A')
-                             from food in db.Foods.LeftJoin(pr => pr.TypeId == type.ID && pr.STATE == 'A')
-                             from dtl in db.FoodDetails.LeftJoin(pr => pr.FoodId == food.ID && pr.STATE == 'A')
-                             from shopImg in db.Images.LeftJoin(pr => pr.ConnectId == p.ID && pr.STATE == 'A')
-                             from img in db.Images.LeftJoin(pr => pr.ConnectId == dtl.ID && pr.STATE == 'A')
-                             from foodImg in db.Images.LeftJoin(pr => pr.ConnectId == food.ID && pr.STATE == 'A')
-                             where p.ACCOUNT == account && p.STATE == 'A'
-                             select new
-                             {
-                                 SHOP_ID = p.ID,
-                                 SHOP_NAME = p.NAME,
-                                 SHOP_IMG_ID = shopImg.ID,
-                                 SHOP_IMG_URL = shopImg.URL,
-                                 TYPE_ID = type.ID,
-                                 type.ICON,
-                                 type.TypeName,
-                                 SEQ = type == null ? (int?)(null) : type.SEQ,
-                                 FOOD_ID = food.ID,
-                                 food.NAME,
-                                 FOOD_IMG_URL = foodImg.URL,
-                                 FOOD_IMG_URL_ID = foodImg.ID,
-                                 food.TAG,
-                                 DETAIL_ID = dtl.ID,
-                                 DETAIL_NAME = dtl.NAME,
-                                 dtl.PRICE,
-                                 dtl.DetailDesc,
-                                 img.URL,
-                                 DETAIL_IMG_ID = img.ID
-                             };
-                var rs = result.ToList().GroupBy(x => new { x.SHOP_NAME, x.SHOP_ID }).Select(x => new ProductModel
-                {
-                    SHOP_NAME = x.Key.SHOP_NAME,
-                    SHOP_ID = x.Key.SHOP_ID,
-                    Urls = result.All(c=>c.SHOP_IMG_ID == null) ? new List<ProductImage>() : x.GroupBy(c => new { c.SHOP_IMG_ID, c.SHOP_IMG_URL }).Select(c => new ProductImage
-                    {
-                        URL = c.Key.SHOP_IMG_URL,
-                        IMG_ID = c.Key.SHOP_IMG_ID
-                    }).ToList(),
-                    TYPES = x.All(c=>c.TYPE_ID == null) ? new List<ProductType>() : x.ToList().GroupBy(c => new { c.ICON, c.TypeName, c.TYPE_ID, c.SEQ }).OrderBy(c=>c.Key.SEQ)
-                     .Select(c => new ProductType
-                     {
-                         SEQ = c.Key.SEQ,
-                         TYPE_ID = c.Key.TYPE_ID,
-                         ICON = c.Key.ICON,
-                         TYPE_NAME = c.Key.TypeName,
-                         FOODS = c.Count(x => x.FOOD_ID != null) == 0 ? new List<ProductFood>() : c.GroupBy(z => new { z.NAME, z.TAG, z.FOOD_ID })
-                         .Select(z => new ProductFood
-                         {
-                             FOOD_ID = z.Key.FOOD_ID,
-                             FOOD_TAG = z.Key.TAG,
-                             FOOD_NAME = z.Key.NAME,
-                             Urls = z.All(d=>d.FOOD_IMG_URL_ID == null) ? new List<ProductImage>() : z.GroupBy(d => new { d.FOOD_IMG_URL, d.FOOD_IMG_URL_ID })
-                             .Select(d => new ProductImage
-                             {
-                                 URL = d.Key.FOOD_IMG_URL,
-                                 IMG_ID = d.Key.FOOD_IMG_URL_ID
-                             }).ToList(),
-                             FOOD_DETAIL = z.All(d=>d.DETAIL_ID == null) ? new List<ProductDetail>() : z.GroupBy(d => new { d.DETAIL_NAME, d.PRICE, d.DetailDesc, d.DETAIL_ID }).OrderBy(d => d.Key.PRICE)
-                             .Select(d => new ProductDetail
-                             {
-                                 DETAIL_ID = d.Key.DETAIL_ID,
-                                 DETAIL_NAME = d.Key.DETAIL_NAME,
-                                 DETAIL_DESC = d.Key.DetailDesc,
-                                 DETAIL_PRICE = d.Key.PRICE ?? 0,
-                                 Urls = d.All(y=>y.DETAIL_IMG_ID == null) ? new List<ProductImage>() : d.GroupBy(y => new { y.URL, y.DETAIL_IMG_ID })
-                                 .Select(y => new ProductImage
-                                 {
-                                     IMG_ID = y.Key.DETAIL_IMG_ID,
-                                     URL = y.Key.URL
-                                 }).ToList()
-                             }).ToList()
-                         }).ToList()
-                     }).ToList()
-                }).FirstOrDefault();
-
-                return rs;
-            }
+            return ProductDomain.Current.GetProductList(account);
         }
 
+       
 
         [Auth]
         [HttpPost]
         public object EditProduct(JToken jt)
         {
-            var model = JsonConvert.DeserializeObject<EditProduct>(jt.ToString());
-            using (var db = new OrderDB())
-            {
-                db.BeginTransaction();
-                try
-                {
-
-                    var food = (from p in db.Foods where model.Food.FOOD_ID == p.ID && p.STATE == 'A' select p).FirstOrDefault();
-                    if(food is null)
-                    {
-                        throw new Exception($"找不到商品ID:{model.Food.FOOD_ID}");
-                    }
-                    if (string.IsNullOrEmpty(model.Type.TYPE_ID))
-                    {
-                        throw new Exception("商品类别ID不能为空！");
-                    }
-                    food.TypeId = model.Type.TYPE_ID;
-                    food.NAME = model.Food.FOOD_NAME;
-                    food.TAG = model.Food.FOOD_TAG;
-                    food.DatetimeModified = DateTime.Now;
-                    food.UserModified = ACCOUNT;
-                    db.Update(food);
-                    //替换食物图片
-                    foreach (var id in model.Food.Urls)
-                    {
-                        var img = (from p in db.Images where id.IMG_ID == p.ID && p.STATE == 'A' select p).FirstOrDefault();
-                        if (img is null) continue;
-                        img.DatetimeModified = DateTime.Now;
-                        img.UserModified = ACCOUNT;
-                        img.URL = id.URL;
-                        db.Update(img);
-                    }
-
-                    //先删除明细，再新增
-                    var ids = model.Food.FOOD_DETAIL.Select(x => x.DETAIL_ID);
-                    db.FoodDetails.Where(x => x.FoodId == food.ID).Delete();
-                    //删除明细图片
-                    db.Images.Where(x => ids.Contains(x.ConnectId)).Delete();
-
-                    //更新明细
-                    foreach (var detail in model.Food.FOOD_DETAIL)
-                    {
-                        if(model.Food.FOOD_DETAIL.Count(x=>x.DETAIL_NAME == detail.DETAIL_NAME) >= 2)
-                        {
-                            throw new Exception("商品明细不能重复！");
-                        }
-                        var dtl = new FoodDetail();
-                        dtl.ID = Guid.NewGuid().ToString("N").ToUpper();
-                        dtl.DatetimeCreated = DateTime.Now;
-                        dtl.UserCreated = ACCOUNT;
-                        dtl.STATE = 'A';
-                        dtl.FoodId = food.ID;
-                        dtl.NAME = detail.DETAIL_NAME;
-                        dtl.PRICE = detail.DETAIL_PRICE;
-                        dtl.DetailDesc = detail.DETAIL_DESC;
-                        db.Insert(dtl);
-
-                        //更新明细图片
-                        foreach (var id in detail.Urls)
-                        {
-                            var img = new IMAGE();
-                            img.ID = Guid.NewGuid().ToString("N").ToUpper();
-                            img.STATE = 'A';
-                            img.DatetimeCreated = DateTime.Now;
-                            img.UserCreated = ACCOUNT;
-                            img.ConnectId = dtl.ID;
-                            img.URL = id.URL;
-                            db.Insert(img);
-                        }
-                    }
-
-                    db.CommitTransaction();
-                }
-                catch (Exception ex)
-                {
-                    db.RollbackTransaction();
-                    throw ex;
-                }
-
-                return true;
-            }
+            return ProductDomain.Current.EditProduct(jt, ACCOUNT);
         }
+
+        
 
         [HttpGet]
         [Auth]
         public object DeleteProduct(string id)
         {
-            using (var db = new OrderDB())
-            {
-                db.BeginTransaction();
-                try
-                {
-                    //先删除明细
-                    var dtl = (from p in db.FoodDetails where p.ID == id && p.STATE == 'A' select p).FirstOrDefault();
-                    var food = (from p in db.Foods where p.ID == id && p.STATE == 'A' select p).FirstOrDefault();
-                    if(dtl != null)
-                    {
-                        dtl.STATE = 'A';
-                        db.Update(dtl);
-                    }
-                    if(food != null)
-                    {
-                        var count = (from p in db.FoodDetails where p.ID == id && p.STATE == 'A' select p).Count();
-                        if (count > 0) throw new Exception("请先删除明细");
-                        else
-                        {
-                            food.STATE = 'A';
-                            db.Update(food);
-                        }
-                    }
-                    
-                    db.CommitTransaction();
-                }
-                catch (Exception ex)
-                {
-                    db.RollbackTransaction();
-                    throw ex;
-                }
-
-                return true;
-            }
+            return ProductDomain.Current.DeleteProduct(id);
         }
 
+       
 
         [Auth]
         [HttpPost]
         public object AddProduct(JToken jt)
         {
-            var model = JsonConvert.DeserializeObject<EditProduct>(jt.ToString());
-            if (string.IsNullOrEmpty(model.Type.TYPE_ID))
-            {
-                throw new Exception("类型ID为空！");
-            }
-            if (string.IsNullOrEmpty(model.Food.FOOD_NAME))
-            {
-                throw new Exception("商品名称不能为空！");
-            }
-            
-            using (var db = new OrderDB())
-            {
-                db.BeginTransaction();
-                try
-                {
-                    var count = (from p in db.Foods where p.NAME == model.Food.FOOD_NAME && p.STATE == 'A' && p.TypeId == model.Type.TYPE_ID select p).Count();
-                    if(count > 0)
-                    {
-                        throw new Exception("当前商品已存在");
-                    }
-                    var food = new FOOD();
-                    food.ID = Guid.NewGuid().ToString("N").ToUpper();
-                    //插入食物图片
-                    if (model.Food.Urls != null && model.Food.Urls.Count > 0)
-                    {
-                        foreach (var id in model.Food.Urls)
-                        {
-                            var img = new IMAGE();
-                            img.ID = Guid.NewGuid().ToString("N").ToUpper();
-                            img.DatetimeCreated = DateTime.Now;
-                            img.STATE = 'A';
-                            img.UserCreated = ACCOUNT;
-                            img.URL = id.URL;
-                            img.ConnectId = food.ID;
-                            db.Insert(img);
-                        }
-                    }
-
-                    food.UserCreated = ACCOUNT;
-                    food.DatetimeCreated = DateTime.Now;
-                    food.STATE = 'A';
-                    food.TypeId = model.Type.TYPE_ID;
-                    food.NAME = model.Food.FOOD_NAME;
-                    food.TAG = model.Food.FOOD_TAG;
-                    db.Insert(food);
-
-                    if (model.Food.FOOD_DETAIL != null && model.Food.FOOD_DETAIL.Count > 0)
-                    {
-                        //新增明细
-                        foreach (var detail in model.Food.FOOD_DETAIL)
-                        {
-                            if (model.Food.FOOD_DETAIL.Count(x => x.DETAIL_NAME == detail.DETAIL_NAME) >= 2)
-                            {
-                                throw new Exception("商品明细不能重复!");
-                            }
-                            var dtl = new FoodDetail();
-                            dtl.ID = Guid.NewGuid().ToString("N").ToUpper();
-                            dtl.DatetimeCreated = DateTime.Now;
-                            dtl.UserCreated = ACCOUNT;
-                            dtl.FoodId = food.ID;
-                            dtl.NAME = detail.DETAIL_NAME;
-                            dtl.PRICE = detail.DETAIL_PRICE;
-                            dtl.STATE = 'A';
-                            db.Insert(dtl);
-
-                            //新增明细图片
-                            foreach (var id in detail.Urls)
-                            {
-                                var img = new IMAGE();
-                                img.ID = Guid.NewGuid().ToString("N").ToUpper();
-                                img.DatetimeCreated = DateTime.Now;
-                                img.UserCreated = ACCOUNT;
-                                img.ConnectId = dtl.ID;
-                                img.URL = id.URL;
-                                img.STATE = 'A';
-                                db.Insert(img);
-                            }
-                        }
-                    }
-
-                    db.CommitTransaction();
-                }
-                catch (Exception ex)
-                {
-                    db.RollbackTransaction();
-                    throw ex;
-                }
-
-                return true;
-            }
+            return ProductDomain.Current.AddProduct(jt, ACCOUNT);
         }
+
+        
 
         [HttpPost]
         [Auth]
         public object AddType(JToken jt)
         {
-            var model = JsonConvert.DeserializeObject<ProductType>(jt.ToString());
-            using (var db = new OrderDB())
-            {
-                db.BeginTransaction();
-                try
-                {
-                    if (string.IsNullOrEmpty(model.TYPE_NAME))
-                    {
-                        throw new Exception("类别名称不能为空！");
-                    }
-                    //更新
-                    db.FoodTypes
-                        .Where(c => c.SEQ >= model.SEQ && c.ShopId == SHOP_ID && c.STATE == 'A')
-                        .Set(c => c.SEQ, c => c.SEQ + 1)
-                        .Update();
-
-                    var repeat = (from p in db.FoodTypes where p.ShopId == SHOP_ID && p.TypeName == model.TYPE_NAME && p.STATE == 'A' select p).FirstOrDefault();
-                    if(repeat != null)
-                    {
-                        throw new Exception($"当前分类{model.TYPE_NAME}已存在！");
-                    }
-                    var type = new FoodType();
-                    type.ID = Guid.NewGuid().ToString("N").ToUpper();
-                    type.DatetimeCreated = DateTime.Now;
-                    type.UserCreated = ACCOUNT;
-                    type.ICON = model.ICON;
-                    type.ShopId = SHOP_ID;
-                    type.TypeName = model.TYPE_NAME;
-                    type.STATE = 'A';
-                    type.SEQ = model.SEQ ?? 0;
-                    db.Insert(type);
-
-                    db.CommitTransaction();
-                }
-                catch (Exception ex)
-                {
-                    db.RollbackTransaction();
-                    throw ex;
-                }
-
-                return true;
-            }
+            return ProductDomain.Current.AddType(jt, ACCOUNT, SHOP_ID);
         }
+
+        
 
         [HttpPost]
         [Auth]
         public object EditType(JToken jt)
         {
-            var model = JsonConvert.DeserializeObject<ProductType>(jt.ToString());
-            using (var db = new OrderDB())
-            {
-                db.BeginTransaction();
-                try
-                {
-                    var curType = (from p in db.FoodTypes where p.ShopId == SHOP_ID && p.ID == model.TYPE_ID && p.STATE == 'A' select p).FirstOrDefault();
-                    var changeType = (from p in db.FoodTypes where p.ShopId == SHOP_ID && p.SEQ == model.SEQ && p.STATE == 'A' select p).FirstOrDefault();
-                    if(curType is null || changeType is null)
-                    {
-                        throw new Exception("交换失败!");
-                    }
-                    changeType.SEQ = curType.SEQ;
-                    curType.SEQ = model.SEQ ?? 0;
-
-                    curType.TypeName = model.TYPE_NAME;
-                    curType.ICON = model.ICON;
-                    curType.DatetimeModified = DateTime.Now;
-                    curType.UserModified = ACCOUNT;
-
-                    db.Update(curType);
-                    db.Update(changeType);
-
-                    db.CommitTransaction();
-                }
-                catch (Exception ex)
-                {
-                    db.RollbackTransaction();
-                    throw ex;
-                }
-
-                return true;
-            }
+            return ProductDomain.Current.EditType(jt, ACCOUNT, SHOP_ID);
         }
+
+       
 
         [HttpGet]
         [Auth]
         public object DeleteType(string id)
         {
-            using (var db = new OrderDB())
-            {
-                db.BeginTransaction();
-                try
-                {
-                    var curType = (from p in db.FoodTypes where p.ID == id select p).FirstOrDefault();
-                    if(curType is null)
-                    {
-                        throw new Exception("当前类别不存在！");
-                    }
-                    curType.STATE = 'D';
-                    
-                    db.FoodTypes
-                        .Where(c => c.SEQ > curType.SEQ && c.ShopId == SHOP_ID && c.STATE == 'A')
-                        .Set(c => c.SEQ, c => c.SEQ - 1)
-                        .Update();
-
-                    db.Update(curType);
-                    db.CommitTransaction();
-                }
-                catch (Exception ex)
-                {
-                    db.RollbackTransaction();
-                    throw ex;
-                }
-
-                return true;
-            }
+            return ProductDomain.Current.DeleteType(id, SHOP_ID);
         }
+
+       
 
         [HttpPost]
         public object PlaceAnOrder(JToken jt)
         {
-            var model = JsonConvert.DeserializeObject<PlaceAnOrder>(jt.ToString());
-            using (var db = new OrderDB())
-            {
-                db.BeginTransaction();
-                try
-                {
-                    var shopId = (from p in db.Shops where p.ACCOUNT == model.Account select p).FirstOrDefault();
-                    if (string.IsNullOrEmpty(model.OrderId))
-                    {
-                        var head = new OrderHead()
-                        {
-                            ID = Guid.NewGuid().ToString("N").ToUpper(),
-                            DatetimeCreated = DateTime.Now,
-                            UserCreated = "custom",
-                            ShopId = shopId?.ID,
-                            STATE = 'A',
-                            DescNum = model.DescNum,
-                            IsClose = 'N'
-                        };
-                        db.Insert(head);
-                        model.OrderId = head.ID;
-                    }
-
-                    var orderDetail = new OrderDetail()
-                    {
-                        ID = Guid.NewGuid().ToString("N").ToUpper(),
-                        DatetimeCreated = DateTime.Now,
-                        UserCreated = "custom",
-                        STATE = 'A',
-                        UserOrder = model.User,
-                        PrrentOrderId = model.OrderId
-                    };
-                    db.Insert(orderDetail);
-
-                    foreach (var item in model.Foods)
-                    {
-                        var detailName = (from p in db.FoodDetails where p.ID == item.DETAIL_ID select p).FirstOrDefault();
-                        if (string.IsNullOrEmpty(item.DETAIL_ID))
-                        {
-                            throw new Exception("存在商品明细无ID");
-                        }
-                        var foodDetail = new OrderDetailFood()
-                        {
-                            ID = Guid.NewGuid().ToString("N").ToUpper(),
-                            DatetimeCreated = DateTime.Now,
-                            UserCreated = "custom",
-                            STATE = 'A',
-                            UserOrder = model.User,
-                            OrderDetailId = orderDetail.ID,
-                            FoodDetailName = detailName.NAME,
-                            QTY = item.NUM,
-                            Price = detailName.PRICE ?? 0
-                        };
-                        db.Insert(foodDetail);
-                    }
-                    db.CommitTransaction();
-                    var msg = "";
-                    if (!string.IsNullOrEmpty(shopId.PrinterCode) && model.IsPrint == "Y")
-                    {
-                        msg = PrinterDomain.Current.print(model);
-                    }
-                    return new
-                    {
-                        OrderId = model.OrderId,
-                        PrintMsg = msg
-                    };
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception(ex.Message);
-                    db.RollbackTransaction();
-                }
-            }
+            return  ProductDomain.Current.PlaceAnOrder(jt);
         }
 
+       
 
         [HttpGet]
         [Auth]
         public object GetOrders(string id, string datetime, string to, string userOrdered)
         {
-            
-            using(var db = new OrderDB())
-            {
-                var iquery = from order in db.OrderHeads
-                             from dtl in db.OrderDetails.LeftJoin(pr => pr.PrrentOrderId == order.ID && pr.STATE == order.STATE)
-                             from food in db.OrderDetailFoods.LeftJoin(pr => pr.OrderDetailId == dtl.ID && pr.STATE == order.STATE)
-                             where (string.IsNullOrEmpty(id) ? order.STATE == 'A' : order.ID == id)
-                             && (string.IsNullOrEmpty(datetime) ? order.STATE == 'A' : order.DatetimeCreated >= Convert.ToDateTime(datetime))
-                             && (string.IsNullOrEmpty(to) ? order.STATE == 'A' : order.DatetimeCreated <= Convert.ToDateTime(to))
-                             && (string.IsNullOrEmpty(userOrdered) ? order.STATE == 'A' : food.UserOrder == userOrdered)
-                             && order.STATE == 'A'
-                             select new
-                             {
-                                 ORDER_ID = order.ID,
-                                 IS_CLOSE = order.IsClose,
-                                 IS_PRINT = order.IsPrint,
-                                 PERSON_NUM = order.PersonNum,
-                                 DESC_NUM = order.DescNum,
-                                 ORDER_DETAIL_ID = food.OrderDetailId,
-                                 food.QTY,
-                                 USER_ORDER = food.UserOrder,
-                                 FOOD_DETAIL_NAME = food.FoodDetailName,
-                                 PRICE = food.Price
-                             };
-
-                var result = iquery.AsEnumerable().GroupBy(x => new { x.ORDER_ID, x.IS_CLOSE, x.IS_PRINT, x.PERSON_NUM, x.DESC_NUM })
-                    .Select(x => new
-                    {
-                        x.Key.ORDER_ID,
-                        x.Key.IS_PRINT,
-                        x.Key.IS_CLOSE,
-                        x.Key.PERSON_NUM,
-                        x.Key.DESC_NUM,
-                        DTL = x.ToList().GroupBy(c => new { c.ORDER_DETAIL_ID, c.QTY, c.USER_ORDER, c.FOOD_DETAIL_NAME, c.PRICE })
-                        .Select(c => new
-                        {
-                            c.Key.ORDER_DETAIL_ID,
-                            c.Key.QTY,
-                            c.Key.USER_ORDER,
-                            c.Key.FOOD_DETAIL_NAME,
-                            c.Key.PRICE
-                        }).ToList()
-                    }).ToList();
-
-                return result;
-            }
+            return  ProductDomain.Current.GetOrders(id, datetime, to, userOrdered);
         }
+
+        
 
 
         /// <summary>
@@ -587,40 +104,18 @@ namespace OrderApi.Controllers
         [HttpGet]
         public bool DeskIsOccupied(string desckNum, string shopAcount)
         {
-            using (var db = new OrderDB())
-            {
-                var shopId = (from p in db.Shops where p.ACCOUNT == shopAcount select p).FirstOrDefault()?.ID;
-                var order = (from p in db.OrderHeads
-                             orderby p.DatetimeCreated descending
-                             where p.DescNum == desckNum && p.ShopId == shopId
-                             select p).FirstOrDefault();
-                return order != null && order.IsClose == 'N';
-            }
+            return  ProductDomain.Current.DeskIsOccupied(desckNum, shopAcount);
         }
 
+        
 
         [HttpGet]
         public bool CloseOrder(string orderId)
         {
-            using (var db = new OrderDB())
-            {
-                try
-                {
-                    var order = (from p in db.OrderHeads
-                                 where p.ID == orderId
-                                 select p).FirstOrDefault();
-                    order.IsClose = 'Y';
-                    order.DatetimeModified = DateTime.Now;
-                    db.Update(order);
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-                return true;
-            }
+            return  ProductDomain.Current.CloseOrder(orderId);
         }
 
+        
 
         [HttpGet]
         [Auth]
@@ -638,35 +133,18 @@ namespace OrderApi.Controllers
         [Auth]
         public string AddOrEditDesk(string deskNum, string deskDesc)
         {
-            using (var db = new OrderDB())
-            {
-                var result = from p in db.ShopDesks where p.DeskCount == deskNum && p.ShopId == SHOP_ID && p.STATE == 'A' select p;
-                if (result is null || result.Count() == 0)
-                {
-                    var deck = new ShopDesk()
-                    {
-                        ID = Guid.NewGuid().ToString("N").ToUpper(),
-                        DatetimeCreated = DateTime.Now,
-                        STATE = 'A',
-                        ShopId = SHOP_ID,
-                        UserCreated = ACCOUNT,
-                        DeskCount = deskNum,
-                        DescDesc = deskDesc
-                    };
-                    db.Insert(deck);
-                    return "新增成功";
-                }
-                else
-                {
-                    var desk = result.FirstOrDefault();
-                    desk.DatetimeModified = DateTime.Now;
-                    desk.UserModified = ACCOUNT;
-                    desk.DeskCount = deskNum;
-                    desk.DescDesc = deskDesc;
-                    db.Update(desk);
-                    return "修改成功";
-                }
-            }
+            return  ProductDomain.Current.AddOrEditDesk(deskNum, deskDesc, ACCOUNT, SHOP_ID);
         }
+
+      
+
+        [HttpGet]
+        [Auth]
+        public string DeleteDesk(string descNum)
+        {
+            return  ProductDomain.Current.DeleteDesk(descNum, ACCOUNT, SHOP_ID);
+        }
+
+       
     }
 }

@@ -243,3 +243,9 @@
 //获取订单
 ````
 
+### /api/Product/DeleteDesk?descNum={0}
+
+```` json
+//删除桌号
+````
+
