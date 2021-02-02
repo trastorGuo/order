@@ -42,6 +42,8 @@ namespace OrderApi.Domains
                                  FOOD_IMG_URL = foodImg.URL,
                                  FOOD_IMG_URL_ID = foodImg.ID,
                                  food.TAG,
+                                 food.INVENTORY,
+                                 food.VISIBLE,
                                  DETAIL_ID = dtl.ID,
                                  DETAIL_NAME = dtl.NAME,
                                  dtl.PRICE,
@@ -65,12 +67,14 @@ namespace OrderApi.Domains
                          TYPE_ID = c.Key.TYPE_ID,
                          ICON = c.Key.ICON,
                          TYPE_NAME = c.Key.TypeName,
-                         FOODS = c.Count(x => x.FOOD_ID != null) == 0 ? new List<ProductFood>() : c.GroupBy(z => new { z.NAME, z.TAG, z.FOOD_ID })
+                         FOODS = c.Count(x => x.FOOD_ID != null) == 0 ? new List<ProductFood>() : c.GroupBy(z => new { z.NAME, z.TAG, z.FOOD_ID, z.VISIBLE, z.INVENTORY})
                          .Select(z => new ProductFood
                          {
                              FOOD_ID = z.Key.FOOD_ID,
                              FOOD_TAG = z.Key.TAG,
                              FOOD_NAME = z.Key.NAME,
+                             VISIBLE = z.Key.VISIBLE,
+                             INVENTORY = z.Key.INVENTORY,
                              Urls = z.All(d => d.FOOD_IMG_URL_ID == null) ? new List<ProductImage>() : z.GroupBy(d => new { d.FOOD_IMG_URL, d.FOOD_IMG_URL_ID })
                              .Select(d => new ProductImage
                              {
@@ -123,6 +127,8 @@ namespace OrderApi.Domains
                     food.TAG = model.Food.FOOD_TAG;
                     food.DatetimeModified = DateTime.Now;
                     food.UserModified = ACCOUNT;
+                    food.INVENTORY = model.Food.INVENTORY;
+                    food.VISIBLE = model.Food.VISIBLE;
                     db.Update(food);
 
                     //删除商品图片
@@ -209,7 +215,7 @@ namespace OrderApi.Domains
                     var food = (from p in db.Foods where p.ID == id && p.STATE == 'A' select p).FirstOrDefault();
                     if (dtl != null)
                     {
-                        dtl.STATE = 'A';
+                        dtl.STATE = 'D';
                         db.Update(dtl);
                     }
                     if (food != null)
@@ -218,7 +224,7 @@ namespace OrderApi.Domains
                         if (count > 0) throw new Exception("请先删除明细");
                         else
                         {
-                            food.STATE = 'A';
+                            food.STATE = 'D';
                             db.Update(food);
                         }
                     }
@@ -282,6 +288,9 @@ namespace OrderApi.Domains
                     food.TypeId = model.Type.TYPE_ID;
                     food.NAME = model.Food.FOOD_NAME;
                     food.TAG = model.Food.FOOD_TAG;
+
+                    food.VISIBLE = model.Food.VISIBLE;
+                    food.INVENTORY = model.Food.INVENTORY;
                     db.Insert(food);
 
                     if (model.Food.FOOD_DETAIL != null && model.Food.FOOD_DETAIL.Count > 0)
@@ -468,7 +477,8 @@ namespace OrderApi.Domains
                             ShopId = shopId?.ID,
                             STATE = 'A',
                             DescNum = model.DescNum,
-                            IsClose = 'N'
+                            IsClose = 'N',
+                            IsPrint = Convert.ToChar(model.IsPrint)
                         };
                         db.Insert(head);
                         model.OrderId = head.ID;
@@ -488,9 +498,19 @@ namespace OrderApi.Domains
                     foreach (var item in model.Foods)
                     {
                         var detailName = (from p in db.FoodDetails where p.ID == item.DETAIL_ID select p).FirstOrDefault();
+                        
                         if (string.IsNullOrEmpty(item.DETAIL_ID))
                         {
                             throw new Exception("存在商品明细无ID");
+                        }
+                        var food = (from p in db.Foods where p.ID == detailName.FoodId && p.STATE == 'A' select p).FirstOrDefault();
+                        if(food is null)
+                        {
+                            throw new Exception("当前商品不存在");
+                        }
+                        if (food.INVENTORY == 0)
+                        {
+                            throw new Exception($"商品{food.NAME}库存不足！");
                         }
                         var foodDetail = new OrderDetailFood()
                         {
@@ -505,6 +525,9 @@ namespace OrderApi.Domains
                             Price = detailName.PRICE ?? 0
                         };
                         db.Insert(foodDetail);
+
+                        food.INVENTORY -= 1;
+                        db.Update(food);
                     }
                     db.CommitTransaction();
                     var msg = "";

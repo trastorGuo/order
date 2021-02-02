@@ -176,19 +176,19 @@ namespace OrderApi.Controllers
         {
             using (var db = new OrderDB()) {
                 var shopInfo = LoginDomain.Current.ShopInfo(account);
-                var urls = (from p in db.Images where p.ConnectId == shopInfo.ID select p).Select(x => new
+                var urls = (from p in db.Images where p.ConnectId == shopInfo.ID && p.STATE == 'A' select p).Select(x => new
                 {
                     ID = x.ID,
                     URL = x.URL
                 }).ToList();
-                var DeskList = (from p in db.ShopDesks where p.ShopId == SHOP_ID select p).Select(x=>new
+                var DeskList = (from p in db.ShopDesks where p.ShopId == SHOP_ID && p.STATE == 'A' select p).Select(x=>new
                 {
                     x.DescDesc,
                     x.DeskCount
                 }).ToList();
                 return new
                 {
-                    shopInfo.PrinterCode,
+                    PRINTER = shopInfo.PrinterCode,
                     shopInfo.NAME,
                     shopInfo.ADDRESS,
                     shopInfo.ACCOUNT,

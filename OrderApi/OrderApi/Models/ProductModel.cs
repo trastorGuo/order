@@ -27,6 +27,8 @@ namespace OrderApi.Models
         public string FOOD_ID { get; set; }
         public string FOOD_TAG { get; set; }
         public string FOOD_NAME { get; set; }
+        public char VISIBLE { get; set; }
+        public decimal INVENTORY { get; set; }
         public List<ProductDetail> FOOD_DETAIL { get; set; }
         public List<ProductImage> Urls { get; set; }
     }
