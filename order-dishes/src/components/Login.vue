@@ -1,17 +1,14 @@
 <template>
   <div id="app" style="height: 100%;width: 100%;">
     <div class="backgroud-img-div">
-      <!-- <img :src="testUrl" style="position: fixed;bottom: 0;width: 100%;" /> -->
-      <img src="http://cdn.trastor.cn/huoguo.jpg?e=1611563582&token=ClIOkNHZ5aCGStAfuRj4fm_8trdXawNcbwn6-s-X:NErKPNSMMeIZgsyMWSMJh8Jn6Yk="
-        style="position: fixed;bottom: 0;width: 100%;" />
-      <!-- <img src="https://gitee.com/trastor/picture/raw/master/image-20210117195619570.png" style="position: fixed;bottom: 0;width: 100%;" /> -->
+      <img src="http://cdn.trastor.cn/huoguo1.jpg" style="position: fixed;bottom: 0;width: 100%;" />
     </div>
     <div class="login-border-div ">
       <!-- <div style="color: white;text-align: center;">周洛御景山庄</div> -->
       <div class="login-border">
         <v-form ref="form" lazy-validation style="text-align: center;">
-          <v-text-field v-model="name" label="账号1" required></v-text-field>
-          <v-text-field v-model="password" label="密码" required type="password"></v-text-field>
+          <v-text-field v-model="name" label="账号" rounded required outlined dense></v-text-field>
+          <v-text-field v-model="password" label="密码" rounded required type="password" outlined dense></v-text-field>
           <v-btn style="width:200px; " color="#73ce5f" rounded dark @click="login()">登陆</v-btn>
         </v-form>
       </div>
@@ -26,7 +23,14 @@ export default {
     name: "",
     password: "",
     testUrl: "",
+    shopInfo: {},
   }),
+  mounted() {
+    let token =this.$fw.getToken();
+    this.shopInfo =this.$fw.getShopInfo();
+    if ((token != null || token != "") && this.shopInfo.ACCOUNT != null)
+      this.getShopInfo(this.shopInfo.ACCOUNT);
+  },
   methods: {
     login: function () {
       let self = this;
@@ -50,27 +54,8 @@ export default {
               self.$message.error(response.message.content);
               return;
             }
-            window.localStorage.setItem("accessToken", response.data);
-            self
-              .$http("get", "/api/User/ShopInfo?account=" + self.name)
-              .then((response) => {
-                console.log(response);
-                if (response != null) {
-                  if (!response.success) {
-                    self.$message.error(response.message.content);
-                    return;
-                  }
-                  self.$message.success("登陆成功！");
-                  self.$store.commit("mutationsChangeShopInfo", response.data);
-                  window.localStorage.setItem(
-                    "shopInfo",
-                    JSON.stringify(response.data)
-                  );
-                  self.$router.push({
-                    path: "/shop/" + self.name + "/ShopInfo",
-                  });
-                }
-              });
+            self.$fw.saveToken(response.data);
+            self.getShopInfo(self.name);
           }
         })
         .catch((err) => {
@@ -78,6 +63,26 @@ export default {
           console.log(err.message);
         })
         .finally(() => {});
+    },
+    getShopInfo(ACCOUNT) {
+      let self = this;
+      self
+        .$http("get", "/api/User/ShopInfo?account=" + ACCOUNT)
+        .then((response) => {
+          console.log(response);
+          if (response != null) {
+            if (!response.success) {
+              self.$message.error(response.message.content);
+              return;
+            }
+            self.$message.success("登陆成功！");
+            self.$store.commit("mutationsChangeShopInfo", response.data);
+            self.$fw.saveShopInfo(response.data);
+            self.$router.replace({
+              path: "/shop/" + ACCOUNT + "/ShopInfo",
+            });
+          }
+        });
     },
   },
 };

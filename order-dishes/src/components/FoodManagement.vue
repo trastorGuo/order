@@ -1,17 +1,23 @@
 <template>
   <v-container style="height: 100%">
     <v-card style="height: 100%;min-height:1000px;">
-      <v-tabs vertical style="height: 100%">
+      <v-tabs vertical style="height: 100%" v-model="selectedType">
         <template v-for="item in types">
           <v-tab :key="item.TYPE_ID">{{ item.TYPE_NAME }}</v-tab>
           <v-tab-item :key="'item' + item.TYPE_ID">
-            <template  v-for="food in item.FOODS">
+            <template v-for="food in item.FOODS">
               <v-card flat :key="food.FOOD_ID">
                 <v-card-text>
                   <v-card outlined>
                     <v-list-item three-line style="padding: 0 0 0 16px">
                       <v-list-item-avatar tile size="75">
-                        <v-img :src="food.Urls[0].URL"></v-img>
+                        <v-img v-if="food.Urls.length > 0" :src="food.Urls[0].URL"></v-img>
+                              <v-img v-else style="background: lightgrey;">
+                                <div style="width:100%;line-height: 75px;">
+                                  {{ food.FOOD_NAME }}
+                                </div>
+                              </v-img>
+                        <!-- <v-img :src="food.Urls[0].URL"></v-img> -->
                       </v-list-item-avatar>
                       <v-list-item-content>
                         <p>{{ food.FOOD_NAME }}</p>
@@ -27,21 +33,9 @@
                           <p style="line-height: 40px;" class="primary--text">
                             ${{ food.SelectDetail.DETAIL_PRICE}}</p>
                           <v-spacer></v-spacer>
-                          <v-icon color="primary" @click="EditFood(true)">
+                          <v-icon color="primary" @click="EditFood(food)">
                             mdi-pencil-outline</v-icon>
                           <v-spacer></v-spacer>
-                          <!-- <v-btn v-if="food.NUM > 0" icon>
-                            <v-icon dense color="primary" @click="changeNum(food, -1)">
-                              mdi-minus-circle-outline</v-icon>
-                          </v-btn>
-                          <div style="width: 30px" v-if="food.NUM > 0">
-                            <v-text-field type="number" readonly v-model="food.NUM" style="padding-top: 0" />
-                          </div>
-                          <v-btn icon>
-                            <v-icon dense color="primary" @click="changeNum(food, 1)">
-                              mdi-plus-circle-outline
-                            </v-icon>
-                          </v-btn> -->
                         </div>
                       </v-list-item-content>
                     </v-list-item>
@@ -50,31 +44,33 @@
               </v-card>
             </template>
             <div style="text-align: center;margin: 10px 0;">
-              <v-icon color="primary" @click="EditFood(false)">
+              <v-icon color="primary" @click="EditFood(null)">
                 mdi-plus-circle-outline
               </v-icon>
             </div>
           </v-tab-item>
         </template>
-        <div key="addTypeId" @click="isShowAddType = true">
-            <v-icon color="primary">
-              mdi-plus-circle-outline
-            </v-icon>
-          </div>
+        <div key="addTypeId" @click="isShowAddType = true" style="text-align:center;">
+          <v-icon color="primary">
+            mdi-plus-circle-outline
+          </v-icon>
+        </div>
       </v-tabs>
     </v-card>
     <v-dialog persistent v-model="isShowAddType">
       <template>
         <v-card>
-          <v-toolbar color="primary" dark>请输入类别名称</v-toolbar>
+          <v-toolbar color="primary" dark>类别</v-toolbar>
           <v-card-text>
-            <v-text-field style="margin-right: 16px;" prepend-icon="mdi-account-supervisor" v-model="newTypeName"
-              color="purple darken-2" required></v-text-field>
+            <v-text-field style="margin:  10px 16px 0 16px;" v-model="newTypeName" label="类别名称" outlined dense>
+            </v-text-field>
+            <v-text-field style="margin:  0px 16px ;" type="number" v-model="newSeq" label="序号" outlined dense>
+            </v-text-field>
           </v-card-text>
           <v-card-actions class="justify-end">
             <v-row>
               <v-col cols="6">
-                <v-btn block @click="AddType" color="primary" :disabled="newTypeName==''">新增 </v-btn>
+                <v-btn block @click="AddType" color="primary" :disabled="newTypeName==''">确认 </v-btn>
               </v-col>
               <v-col cols="6">
                 <v-btn block @click="isShowAddType = false" color="primary">取消 </v-btn>
@@ -89,11 +85,13 @@
 <script>
 export default {
   data: () => ({
+    selectedType: null,
     shopName: "",
     account: "",
     types: [],
     isShowAddType: false,
     newTypeName: "",
+    newSeq: "",
   }),
   mounted() {
     let self = this;
@@ -108,6 +106,7 @@ export default {
       let self = this;
       self.isShowAddType = false;
       var data = {
+        SEQ:self.newSeq,
         ICON: "",
         TYPE_NAME: self.newTypeName,
       };
@@ -137,13 +136,29 @@ export default {
                 food.SelectDetail = food.FOOD_DETAIL[0];
               });
             });
+            self.newSeq = self.types.length+1;
           }
         })
         .catch((err) => {
           console.log(err.message);
         });
     },
-    EditFood: function (isEdit) {},
+    EditFood: function (food) {
+      if (food == null) {
+        this.$store.commit("mutationsChangeCurFood", {
+          type: this.types[this.selectedType],
+          food: "",
+        });
+      } else {
+        this.$store.commit("mutationsChangeCurFood", {
+          type: this.types[this.selectedType],
+          food: food,
+        });
+      }
+      this.$router.push({
+        path: "/AddFood",
+      });
+    },
     ChangeFoodDetailSelect: function (food, index) {
       if (typeof index != "undefined") {
         food.SelectDetail = food.FOOD_DETAIL[index];

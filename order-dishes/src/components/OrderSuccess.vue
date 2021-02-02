@@ -5,15 +5,14 @@
       <p class="display-1 text--primary">
         <v-icon color="primary" large>
           mdi-check-circle
-        </v-icon>下单成功！
+        </v-icon>下单成功，坐等开吃
       </p>
       <div class="text--primary">
-        商家正在备菜中....
+        菜品正在制作中....
       </div>
     </div>
     <v-card class="mx-auto" max-width="344">
       <v-card-text>
-
         <template v-for="food in itemsCar">
           <v-list-item :key="food.SelectDetail.DETAIL_ID" v-if="food.NUM > 0">
             <v-list-item-avatar tile size="40">
@@ -36,9 +35,7 @@
           <v-divider></v-divider>
         </template>
       </v-card-text>
-      <!-- <v-card-actions>
-     
-      </v-card-actions> -->
+ 
     </v-card>
     <div style="text-align:center;padding:8px">
       <v-btn style="width:100%" color="primary" @click="toFood()">
