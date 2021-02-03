@@ -241,6 +241,81 @@
 
 ```` json
 //获取订单
+{
+  "success": true,
+  "code": 200,
+  "data": [
+    {
+      "DATE": "2021-02-03T00:00:00",
+      "ORDER": [
+        {
+          "ORDER_DATE": "2021-02-03T22:38:25.92",
+          "USER_ORDER": "god",
+          "ORDER_ID": "7199B44618924ACCB07AB5CA0D61FD2F",
+          "IS_PRINT": "Y",
+          "IS_CLOSE": "N",
+          "PERSON_NUM": 2,
+          "DESC_NUM": "4",
+          "FOODS": [
+            {
+              "ORDER_DETAIL_ID": "1400BDF443D74B1DA9CEE4C88A288EB9",
+              "QTY": 1,
+              "USER_ORDER": "god",
+              "FOOD_DETAIL_NAME": "食物C",
+              "PRICE": 45
+            },
+            {
+              "ORDER_DETAIL_ID": "1400BDF443D74B1DA9CEE4C88A288EB9",
+              "QTY": 3,
+              "USER_ORDER": "god",
+              "FOOD_DETAIL_NAME": "食物d(食物B_2)",
+              "PRICE": 101
+            },
+            {
+              "ORDER_DETAIL_ID": "1400BDF443D74B1DA9CEE4C88A288EB9",
+              "QTY": 1,
+              "USER_ORDER": "god",
+              "FOOD_DETAIL_NAME": "222(1)",
+              "PRICE": 0
+            }
+          ]
+        },
+        {
+          "ORDER_DATE": "2021-02-03T22:38:34.603",
+          "USER_ORDER": "god",
+          "ORDER_ID": "A1FE7A4924984D82B1B5DD3F12749320",
+          "IS_PRINT": "Y",
+          "IS_CLOSE": "N",
+          "PERSON_NUM": 6,
+          "DESC_NUM": "4",
+          "FOODS": [
+            {
+              "ORDER_DETAIL_ID": "535956991CA94465B008B57F2DF7C545",
+              "QTY": 1,
+              "USER_ORDER": "god",
+              "FOOD_DETAIL_NAME": "222(1)",
+              "PRICE": 0
+            },
+            {
+              "ORDER_DETAIL_ID": "535956991CA94465B008B57F2DF7C545",
+              "QTY": 1,
+              "USER_ORDER": "god",
+              "FOOD_DETAIL_NAME": "食物d(食物B_2)",
+              "PRICE": 101
+            },
+            {
+              "ORDER_DETAIL_ID": "535956991CA94465B008B57F2DF7C545",
+              "QTY": 3,
+              "USER_ORDER": "god",
+              "FOOD_DETAIL_NAME": "食物C",
+              "PRICE": 45
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
 ````
 
 ### /api/Product/DeleteDesk?descNum={0}

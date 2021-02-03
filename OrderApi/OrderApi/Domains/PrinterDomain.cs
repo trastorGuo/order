@@ -110,7 +110,8 @@ namespace OrderApi.Domains
 
             //拼凑订单内容时可参考如下格式
             string orderInfo;
-            orderInfo = $"<CB>{name}-{order.DescNum}桌</CB><BR>";//标题字体如需居中放大,就需要用标签套上
+            orderInfo = $"<CB>{name}</CB><BR>";//标题字体如需居中放大,就需要用标签套上
+            orderInfo += $"桌号:{order.DescNum}    用餐人数：{order.PersonNum}<BR>";
             orderInfo += "名称　　　　　 单价  数量 金额<BR>";
             orderInfo += "--------------------------------<BR>";
             var total = 0M;
@@ -121,10 +122,10 @@ namespace OrderApi.Domains
                     var dtlName = (from p in db.FoodDetails where p.ID == ds.DETAIL_ID select p).FirstOrDefault();
                     var food = (from p in db.Foods where p.ID == dtlName.FoodId select p).FirstOrDefault();
                     var nm = $"{food.NAME}";
-                    if (dtlName.NAME != "null") nm += $"({dtlName.NAME})";
+                    if (!string.IsNullOrEmpty(dtlName.NAME)) nm += $"({dtlName.NAME})";
 
-                    orderInfo += $"{nm.PadLeft(11, ' ')}{decimal.Round(dtlName.PRICE.Value, 1),-8}{ds.NUM,-3}{decimal.Round(dtlName.PRICE.Value, 1) * ds.NUM}<BR>";
-                    total += decimal.Round((dtlName.PRICE.Value) * ds.NUM, 1);
+                    orderInfo += $"{GetNameWithSameLenght(nm, 14)}￥{decimal.Round(dtlName.PRICE.Value),-6}{ds.NUM,-3}￥{decimal.Round(dtlName.PRICE.Value) * ds.NUM}<BR>";
+                    total += decimal.Round(dtlName.PRICE.Value * ds.NUM);
                 }
 
             }
@@ -132,10 +133,10 @@ namespace OrderApi.Domains
             orderInfo += "--------------------------------<BR>";
             orderInfo += $"合计：{total}元<BR>";
             orderInfo += $"订餐时间：{DateTime.Now}<BR>";
+            orderInfo += $"订单号：{order.OrderId}";
             //orderInfo += "----------请扫描二维码----------";
             //orderInfo += "<QR>http://www.dzist.com</QR>";//把二维码字符串用标签套上即可自动生成二维码
             orderInfo += "<BR>";
-
             orderInfo = Uri.EscapeDataString(orderInfo);
 
             HttpWebRequest req = (HttpWebRequest)HttpWebRequest.Create(URL);
@@ -184,6 +185,22 @@ namespace OrderApi.Domains
             //服务器返回的JSON字符串，建议要当做日志记录起来
             return strResult;
 
+        }
+
+        private string GetNameWithSameLenght(string str, int c)
+        {
+            int t = 0;
+            foreach(var s in str)
+            {
+                if (char.IsControl(s) || char.IsDigit(s) || s == '(' || s == ')' || s >= 'A' && s <= 'z') t += 1;
+                else t += 2;
+            }
+            while(t <= c)
+            {
+                str += " ";
+                t += 1;
+            }
+            return str;
         }
 
     }

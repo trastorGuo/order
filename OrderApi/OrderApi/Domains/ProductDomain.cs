@@ -467,6 +467,7 @@ namespace OrderApi.Domains
                 try
                 {
                     var shopId = (from p in db.Shops where p.ACCOUNT == model.Account select p).FirstOrDefault();
+                    model.ShopName = shopId.NAME;
                     if (string.IsNullOrEmpty(model.OrderId))
                     {
                         var head = new OrderHead()
@@ -475,6 +476,7 @@ namespace OrderApi.Domains
                             DatetimeCreated = DateTime.Now,
                             UserCreated = "custom",
                             ShopId = shopId?.ID,
+                            PersonNum = model.PersonNum,
                             STATE = 'A',
                             DescNum = model.DescNum,
                             IsClose = 'N',
@@ -520,7 +522,7 @@ namespace OrderApi.Domains
                             STATE = 'A',
                             UserOrder = model.User,
                             OrderDetailId = orderDetail.ID,
-                            FoodDetailName = detailName.NAME,
+                            FoodDetailName = string.IsNullOrEmpty(detailName.NAME) ? food.NAME : food.NAME + "(" + detailName.NAME + ")",
                             QTY = item.NUM,
                             Price = detailName.PRICE ?? 0
                         };
@@ -563,6 +565,8 @@ namespace OrderApi.Domains
                              && order.STATE == 'A'
                              select new
                              {
+                                 DATETIME_CREATED = order.DatetimeCreated,
+                                 ORDER_DATE = order.DatetimeCreated,
                                  ORDER_ID = order.ID,
                                  IS_CLOSE = order.IsClose,
                                  IS_PRINT = order.IsPrint,
@@ -575,23 +579,30 @@ namespace OrderApi.Domains
                                  PRICE = food.Price
                              };
 
-                var result = iquery.AsEnumerable().GroupBy(x => new { x.ORDER_ID, x.IS_CLOSE, x.IS_PRINT, x.PERSON_NUM, x.DESC_NUM })
+                var result = iquery.AsEnumerable().GroupBy(x => x.DATETIME_CREATED.Date)
                     .Select(x => new
                     {
-                        x.Key.ORDER_ID,
-                        x.Key.IS_PRINT,
-                        x.Key.IS_CLOSE,
-                        x.Key.PERSON_NUM,
-                        x.Key.DESC_NUM,
-                        DTL = x.ToList().GroupBy(c => new { c.ORDER_DETAIL_ID, c.QTY, c.USER_ORDER, c.FOOD_DETAIL_NAME, c.PRICE })
-                        .Select(c => new
+                        DATE = x.Key.Date,
+                        ORDER = x.ToList().GroupBy(v => new { v.USER_ORDER, v.ORDER_ID, v.IS_CLOSE, v.IS_PRINT, v.PERSON_NUM, v.DESC_NUM, v.ORDER_DATE })
+                        .Select(v => new
                         {
-                            c.Key.ORDER_DETAIL_ID,
-                            c.Key.QTY,
-                            c.Key.USER_ORDER,
-                            c.Key.FOOD_DETAIL_NAME,
-                            c.Key.PRICE
-                        }).ToList()
+                            v.Key.ORDER_DATE,
+                            v.Key.USER_ORDER,
+                            v.Key.ORDER_ID,
+                            v.Key.IS_PRINT,
+                            v.Key.IS_CLOSE,
+                            v.Key.PERSON_NUM,
+                            v.Key.DESC_NUM,
+                            FOODS = v.ToList().GroupBy(c => new { c.ORDER_DETAIL_ID, c.QTY, c.USER_ORDER, c.FOOD_DETAIL_NAME, c.PRICE })
+                            .Select(c => new
+                            {
+                                c.Key.ORDER_DETAIL_ID,
+                                c.Key.QTY,
+                                c.Key.USER_ORDER,
+                                c.Key.FOOD_DETAIL_NAME,
+                                c.Key.PRICE
+                            }).ToList()
+                        })
                     }).ToList();
 
                 return result;
