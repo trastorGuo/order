@@ -91,9 +91,16 @@ namespace OrderApi.Controllers
         [Auth]
         public object GetOrders(string id, string datetime, string to, string userOrdered)
         {
-            return  ProductDomain.Current.GetOrders(id, datetime, to, userOrdered);
+            return  ProductDomain.Current.GetOrders(id, datetime, to, userOrdered, SHOP_ID);
         }
 
+
+        [HttpGet]
+        [Auth]
+        public object DeleteOrder(string id)
+        {
+            return ProductDomain.Current.DeleteOrder(id);
+        }
         
 
 
@@ -104,7 +111,7 @@ namespace OrderApi.Controllers
         /// <param name="shopAcount"></param>
         /// <returns></returns>
         [HttpGet]
-        public bool DeskIsOccupied(string desckNum, string shopAcount)
+        public string DeskIsOccupied(string desckNum, string shopAcount)
         {
             return  ProductDomain.Current.DeskIsOccupied(desckNum, shopAcount);
         }
@@ -145,6 +152,13 @@ namespace OrderApi.Controllers
         public string DeleteDesk(string descNum)
         {
             return  ProductDomain.Current.DeleteDesk(descNum, ACCOUNT, SHOP_ID);
+        }
+
+        [HttpPost]
+        [Auth]
+        public object Reprint(JToken jt)
+        {
+            return ProductDomain.Current.Reprint(jt);
         }
 
        

@@ -161,7 +161,27 @@
 
 
 
+### /api/Product/Reprint
 
+```` js
+{
+  "Foods": [
+    {
+      "DETAIL_ID": "30A4F1ED9AE1474997EBF3D508418A75",
+      "NUM": 1
+    },
+    {
+      "DETAIL_ID": "2F37224ABB7B451691D2EBED526A025B",
+      "NUM": 2
+    }
+  ],
+  "Account":"jiang1",
+  "User": "trastor",
+  "OrderId": "B17D70F631934A31A2A804EB892B77CE",
+  "DescNum":"1",
+  "PersonNum":2,
+}
+````
 
 
 
@@ -322,5 +342,11 @@
 
 ```` json
 //删除桌号
+````
+
+### /api/Product/DeleteOrder?id={0}
+
+```` js
+//参数：订单ID
 ````
 

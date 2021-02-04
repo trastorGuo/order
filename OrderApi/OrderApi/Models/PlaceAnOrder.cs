@@ -13,7 +13,6 @@ namespace OrderApi.Models
         public string User { get; set; }
         public string DescNum { get; set; }
         public string IsPrint { get; set; }
-        public string ShopName { get; set; }
         public int PersonNum { get; set; }
     }
 

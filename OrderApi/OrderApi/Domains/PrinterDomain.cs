@@ -120,6 +120,10 @@ namespace OrderApi.Domains
                 using (var db = new OrderDB())
                 {
                     var dtlName = (from p in db.FoodDetails where p.ID == ds.DETAIL_ID select p).FirstOrDefault();
+                    if(dtlName is null)
+                    {
+                        throw new Exception("明细不存在！");
+                    }
                     var food = (from p in db.Foods where p.ID == dtlName.FoodId select p).FirstOrDefault();
                     var nm = $"{food.NAME}";
                     if (!string.IsNullOrEmpty(dtlName.NAME)) nm += $"({dtlName.NAME})";

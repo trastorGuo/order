@@ -467,7 +467,6 @@ namespace OrderApi.Domains
                 try
                 {
                     var shopId = (from p in db.Shops where p.ACCOUNT == model.Account select p).FirstOrDefault();
-                    model.ShopName = shopId.NAME;
                     if (string.IsNullOrEmpty(model.OrderId))
                     {
                         var head = new OrderHead()
@@ -551,7 +550,7 @@ namespace OrderApi.Domains
             }
         }
 
-        public object GetOrders(string id, string datetime, string to, string userOrdered)
+        public object GetOrders(string id, string datetime, string to, string userOrdered, string SHOP_ID)
         {
             using (var db = new OrderDB())
             {
@@ -563,6 +562,7 @@ namespace OrderApi.Domains
                              && (string.IsNullOrEmpty(to) ? order.STATE == 'A' : order.DatetimeCreated <= Convert.ToDateTime(to))
                              && (string.IsNullOrEmpty(userOrdered) ? order.STATE == 'A' : food.UserOrder == userOrdered)
                              && order.STATE == 'A'
+                             && order.ShopId == SHOP_ID
                              select new
                              {
                                  DATETIME_CREATED = order.DatetimeCreated,
@@ -601,16 +601,61 @@ namespace OrderApi.Domains
                                 c.Key.USER_ORDER,
                                 c.Key.FOOD_DETAIL_NAME,
                                 c.Key.PRICE
-                            }).ToList()
+                            }).OrderByDescending(c=>c.PRICE).ToList()
                         })
                     }).ToList();
 
-                return result;
+                return result.OrderByDescending(x=>x.DATE).ToList();
             }
         }
 
 
-        public bool DeskIsOccupied(string desckNum, string shopAcount)
+        public object DeleteOrder(string id)
+        {
+            using(var db = new OrderDB())
+            {
+                db.BeginTransaction();
+                try
+                {
+                    var detail = from p in db.OrderDetails
+                                 where p.PrrentOrderId == id && p.STATE == 'A'
+                                 select p;
+                    if(detail == null || !detail.Any())
+                    {
+                        throw new Exception("当前订单不存在");
+                    }
+
+                    var ids = detail.Select(x => x.ID);
+                    var foods = from p in db.OrderDetailFoods where ids.Contains(p.OrderDetailId) && p.STATE == 'A' select p;
+
+                    db.OrderHeads.Where(x => x.ID == id && x.STATE == 'A')
+                        .Set(x => x.STATE, 'D').Update();
+
+                    detail.ToList().ForEach(x =>
+                    {
+                        x.STATE = 'D';
+                        x.DatetimeModified = DateTime.Now;
+                    });
+
+                    foods.ToList().ForEach(x =>
+                    {
+                        x.STATE = 'D';
+                        x.DatetimeModified = DateTime.Now;
+                    });
+
+                    db.CommitTransaction();
+                }
+                catch(Exception ex)
+                {
+                    db.RollbackTransaction();
+                    throw ex;
+                }
+                return "删除成功！";
+            }
+        }
+
+
+        public string DeskIsOccupied(string desckNum, string shopAcount)
         {
             using (var db = new OrderDB())
             {
@@ -619,7 +664,7 @@ namespace OrderApi.Domains
                              orderby p.DatetimeCreated descending
                              where p.DescNum == desckNum && p.ShopId == shopId
                              select p).FirstOrDefault();
-                return order != null && order.IsClose == 'N';
+                return (order != null && order.IsClose == 'N') ? order.ID : "";
             }
         }
 
@@ -696,7 +741,15 @@ namespace OrderApi.Domains
             }
         }
 
-
+        public object Reprint(JToken jt)
+        {
+            var model = JsonConvert.DeserializeObject<PlaceAnOrder>(jt.ToString());
+            var msg = PrinterDomain.Current.print(model);
+            return new
+            {
+                PrintMsg = msg
+            };
+        }
 
     }
 }
