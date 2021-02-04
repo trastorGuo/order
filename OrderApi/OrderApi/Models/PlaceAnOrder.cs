@@ -19,6 +19,8 @@ namespace OrderApi.Models
     public class OrderDetail
     {
         public string DETAIL_ID { get; set; }
+        public string DETAIL_NAME { get; set; }
         public int NUM { get; set; }
+        public decimal? PRICE { get; set; }
     }
 }

@@ -136,7 +136,10 @@
     "PRINTER":"",
     "URLS":[{
         "URL":""
-    }]
+    }],
+    "CAPITATION":'',
+    "COST":0
+    
 }
 ````
 
@@ -155,7 +158,9 @@
     "URLS":[{
         "ID":"",//有ID修改，无ID新增
         "URL":""
-    }]
+    }],
+    "CAPITATION":'',
+    "COST":0
 }
 ````
 
@@ -183,7 +188,17 @@
 }
 ````
 
+### /api/user/ModifiefPassword?username={0}&passwordbefore={1}&passwordafter={2}
 
+```` js
+{
+    "username":"",
+    "passwordbefore":"",
+	"passwordafter":""
+}
+//参数：用户名，原密码，修改后密码
+//管理员修改密码不会校验原密码
+````
 
 
 
@@ -282,21 +297,24 @@
               "QTY": 1,
               "USER_ORDER": "god",
               "FOOD_DETAIL_NAME": "食物C",
-              "PRICE": 45
+              "PRICE": 45,
+              "URLS":[]
             },
             {
               "ORDER_DETAIL_ID": "1400BDF443D74B1DA9CEE4C88A288EB9",
               "QTY": 3,
               "USER_ORDER": "god",
               "FOOD_DETAIL_NAME": "食物d(食物B_2)",
-              "PRICE": 101
+              "PRICE": 101,
+              "URLS":[]
             },
             {
               "ORDER_DETAIL_ID": "1400BDF443D74B1DA9CEE4C88A288EB9",
               "QTY": 1,
               "USER_ORDER": "god",
               "FOOD_DETAIL_NAME": "222(1)",
-              "PRICE": 0
+              "PRICE": 0,
+              "URLS":[]
             }
           ]
         },
@@ -314,21 +332,24 @@
               "QTY": 1,
               "USER_ORDER": "god",
               "FOOD_DETAIL_NAME": "222(1)",
-              "PRICE": 0
+              "PRICE": 0,
+              "URLS":[]
             },
             {
               "ORDER_DETAIL_ID": "535956991CA94465B008B57F2DF7C545",
               "QTY": 1,
               "USER_ORDER": "god",
               "FOOD_DETAIL_NAME": "食物d(食物B_2)",
-              "PRICE": 101
+              "PRICE": 101,
+              "URLS":[]
             },
             {
               "ORDER_DETAIL_ID": "535956991CA94465B008B57F2DF7C545",
               "QTY": 3,
               "USER_ORDER": "god",
               "FOOD_DETAIL_NAME": "食物C",
-              "PRICE": 45
+              "PRICE": 45,
+              "URLS":[]
             }
           ]
         }
@@ -348,5 +369,16 @@
 
 ```` js
 //参数：订单ID
+````
+
+### /api/User/BusinessStatus
+
+```` js
+//获取图标信息
+//返回
+salesToday,
+salesMonth,
+salesHalfYear,
+week
 ````
 

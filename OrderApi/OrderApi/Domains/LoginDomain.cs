@@ -23,7 +23,7 @@ namespace OrderApi.Domains
                     throw new Exception($"密码不能为空！");
                 }
                 var isExsit = from p in db.Shops
-                              where p.ACCOUNT == name && p.PASSWORD == pwd
+                              where p.ACCOUNT == name && p.PASSWORD == pwd && p.STATE == 'A'
                               select p;
                 return isExsit.Count() > 0;
             }
@@ -34,7 +34,7 @@ namespace OrderApi.Domains
             using (var db = new OrderDB())
             {
                 var infos = from p in db.Shops
-                            where p.ACCOUNT.Contains(account)
+                            where p.ACCOUNT.Contains(account)&& p.STATE == 'A'
                             select p;
                 var info = infos.FirstOrDefault();
                 if (info is null)

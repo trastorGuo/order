@@ -154,11 +154,11 @@ namespace OrderApi.Controllers
             return  ProductDomain.Current.DeleteDesk(descNum, ACCOUNT, SHOP_ID);
         }
 
-        [HttpPost]
+        [HttpGet]
         [Auth]
-        public object Reprint(JToken jt)
+        public object Reprint(string orderId)
         {
-            return ProductDomain.Current.Reprint(jt);
+            return ProductDomain.Current.Reprint(orderId, ACCOUNT);
         }
 
        

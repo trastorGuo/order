@@ -513,6 +513,8 @@ namespace OrderApi.Domains
                         {
                             throw new Exception($"商品{food.NAME}库存不足！");
                         }
+                        var urls = (from p in db.Images where p.ConnectId == food.ID && p.STATE == 'A'
+                                   select p).ToList();
                         var foodDetail = new OrderDetailFood()
                         {
                             ID = Guid.NewGuid().ToString("N").ToUpper(),
@@ -523,7 +525,8 @@ namespace OrderApi.Domains
                             OrderDetailId = orderDetail.ID,
                             FoodDetailName = string.IsNullOrEmpty(detailName.NAME) ? food.NAME : food.NAME + "(" + detailName.NAME + ")",
                             QTY = item.NUM,
-                            Price = detailName.PRICE ?? 0
+                            Price = detailName.PRICE ?? 0,
+                            URL = string.Join(";", urls.Select(x=>x.URL))
                         };
                         db.Insert(foodDetail);
 
@@ -576,7 +579,8 @@ namespace OrderApi.Domains
                                  food.QTY,
                                  USER_ORDER = food.UserOrder,
                                  FOOD_DETAIL_NAME = food.FoodDetailName,
-                                 PRICE = food.Price
+                                 PRICE = food.Price,
+                                 food.URL
                              };
 
                 var result = iquery.AsEnumerable().GroupBy(x => x.DATETIME_CREATED.Date)
@@ -593,14 +597,15 @@ namespace OrderApi.Domains
                             v.Key.IS_CLOSE,
                             v.Key.PERSON_NUM,
                             v.Key.DESC_NUM,
-                            FOODS = v.ToList().GroupBy(c => new { c.ORDER_DETAIL_ID, c.QTY, c.USER_ORDER, c.FOOD_DETAIL_NAME, c.PRICE })
+                            FOODS = v.ToList().GroupBy(c => new { c.ORDER_DETAIL_ID, c.QTY, c.USER_ORDER, c.FOOD_DETAIL_NAME, c.PRICE, c.URL })
                             .Select(c => new
                             {
                                 c.Key.ORDER_DETAIL_ID,
                                 c.Key.QTY,
                                 c.Key.USER_ORDER,
                                 c.Key.FOOD_DETAIL_NAME,
-                                c.Key.PRICE
+                                c.Key.PRICE,
+                                URLS = string.IsNullOrEmpty(c.Key.URL) ? Array.Empty<string>() : c.Key.URL.Split(';')
                             }).OrderByDescending(c=>c.PRICE).ToList()
                         })
                     }).ToList();
@@ -741,14 +746,57 @@ namespace OrderApi.Domains
             }
         }
 
-        public object Reprint(JToken jt)
+        public object Reprint(string orderId, string ACCOUNT)
         {
-            var model = JsonConvert.DeserializeObject<PlaceAnOrder>(jt.ToString());
-            var msg = PrinterDomain.Current.print(model);
-            return new
+            using(var db = new OrderDB())
             {
-                PrintMsg = msg
-            };
+                var rs = from head in db.OrderHeads
+                         from dtl in db.OrderDetails.LeftJoin(x => x.PrrentOrderId == head.ID)
+                         from food in db.OrderDetailFoods.LeftJoin(x => x.OrderDetailId == dtl.ID)
+                         where head.ID == orderId && head.STATE == 'A'
+                         select new
+                         {
+                             Account = ACCOUNT,
+                             User = food.UserOrder,
+                             OrderId = head.ID,
+                             DescNum = head.DescNum,
+                             PersonNum = Convert.ToInt32(head.PersonNum ?? 0),
+                             DETAIL_ID = food.ID,
+                             DETAIL_NAME = food.FoodDetailName,
+                             NUM = food.QTY,
+                             PRICE = food.Price
+                         };
+
+                var model = rs.AsEnumerable().GroupBy(x => new { x.Account, x.User, x.OrderId, x.DescNum, x.PersonNum })
+                    .Select(x => new PlaceAnOrder
+                    {
+                        Account = x.Key.Account,
+                        User = x.Key.User,
+                        OrderId = x.Key.OrderId,
+                        DescNum = x.Key.DescNum,
+                        PersonNum = x.Key.PersonNum,
+                        Foods = x.ToList().GroupBy(c => new { c.DETAIL_ID, c.NUM, c.DETAIL_NAME, c.PRICE })
+                        .Select(x => new Models.OrderDetail
+                        {
+                            DETAIL_ID = x.Key.DETAIL_ID,
+                            DETAIL_NAME = x.Key.DETAIL_NAME,
+                            NUM = Convert.ToInt32(x.Key.NUM ?? 0),
+                            PRICE = x.Key.PRICE
+                        }).ToList()
+                    }).FirstOrDefault();
+                if(model == null)
+                {
+                    throw new Exception("当前订单不存在！");
+                }
+
+                var msg = PrinterDomain.Current.reprint(model);
+                return new
+                {
+                    PrintMsg = msg
+                };
+
+            }
+            
         }
 
     }

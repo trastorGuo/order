@@ -55,7 +55,9 @@ namespace OrderApi.Controllers
                     var tel = jt["TEL"]?.ToString();
                     var printer = jt["PRINTER"]?.ToString();
                     var urls = new List<IMAGE>();
-                    if(jt["URLS"]?.ToString() != null) urls = JsonConvert.DeserializeObject<List<IMAGE>>(jt["URLS"].ToString());
+                    var CAPITATION = jt["CAPITATION"]?.ToString();
+                    var COST = Convert.ToInt32(string.IsNullOrEmpty(jt["COST"]?.ToString()) ? 0 : jt["COST"].ToString());
+                    if (jt["URLS"]?.ToString() != null) urls = JsonConvert.DeserializeObject<List<IMAGE>>(jt["URLS"].ToString());
                     if (string.IsNullOrEmpty(name))
                     {
                         throw new Exception("商店名称不能为空！");
@@ -80,6 +82,8 @@ namespace OrderApi.Controllers
                     m.TEL = tel;
                     m.PrinterCode = printer;
                     m.IsAdmin = "N";
+                    m.CAPITATION = CAPITATION;
+                    m.COST = COST;
                     foreach (var url in urls)
                     {
                         var u = new IMAGE
@@ -122,6 +126,8 @@ namespace OrderApi.Controllers
                     var password = jt["PASSWORD"]?.ToString();
                     var tel = jt["TEL"]?.ToString();
                     var printer = jt["PRINTER"]?.ToString();
+                    var CAPITATION = jt["CAPITATION"]?.ToString();
+                    var COST = Convert.ToInt32(string.IsNullOrEmpty(jt["COST"]?.ToString()) ? 0 : jt["COST"].ToString());
                     var urls = JsonConvert.DeserializeObject<List<IMAGE>>(jt["URLS"].ToString());
                     var m = (from p in db.Shops where p.ACCOUNT == account select p).FirstOrDefault();
                     m.UserModified = ACCOUNT;
@@ -133,6 +139,8 @@ namespace OrderApi.Controllers
                     m.PASSWORD = password;
                     m.PrinterCode = printer;
                     m.TEL = tel;
+                    m.CAPITATION = CAPITATION;
+                    m.COST = COST;
                     foreach (var url in urls)
                     {
                         if (string.IsNullOrEmpty(url.ID))
@@ -200,5 +208,127 @@ namespace OrderApi.Controllers
                 };
             }
         }
+
+
+
+        [HttpPost]
+        [Auth]
+        public object ModifiefPassword(JToken jt)
+        {
+            string username = jt["username"]?.ToString();
+            string passwordbefore = jt["passwordbefore"]?.ToString();
+            string passwordafter = jt["passwordafter"]?.ToString();
+            using (var db = new OrderDB())
+            {
+                db.BeginTransaction();
+                try
+                {
+                    if (IS_ADMIN)
+                    {
+                        db.Shops.Where(x => x.ACCOUNT == username && x.STATE == 'A')
+                            .Set(x => x.PASSWORD, passwordafter)
+                            .Update();
+                    }
+                    else
+                    {
+                        if (!LoginDomain.Current.CheckPassword(username, passwordbefore))
+                        {
+                            throw new Exception("当前用户名或密码不正确！");
+                        }
+                        else
+                        {
+                            db.Shops.Where(x => x.ACCOUNT == username && x.STATE == 'A')
+                               .Set(x => x.PASSWORD, passwordafter)
+                               .Update();
+                        }
+                    }
+                    db.CommitTransaction();
+                }
+                catch(Exception ex)
+                {
+                    db.RollbackTransaction();
+                    throw ex;
+                }
+                return "密码修改成功！";
+            }
+            
+        }
+
+
+
+        [HttpGet]
+        [Auth]
+        public object BusinessStatus()
+        {
+            using(var db = new OrderDB())
+            {
+                var bills = from order in db.OrderHeads
+                            join dtl in db.OrderDetails on order.ID equals dtl.PrrentOrderId
+                            join food in db.OrderDetailFoods on dtl.ID equals food.OrderDetailId
+                            where order.ShopId == SHOP_ID && order.DatetimeCreated >= DateTime.Today.AddMonths(-6) && order.STATE == 'A'
+                            select new
+                            {
+                                DATE = order.DatetimeCreated,
+                                COST = order.COST,
+                                ORDER_ID = order.ID,
+                                FOOD_NAME = food.FoodDetailName,
+                                PRICE = food.Price,
+                                food.QTY,
+                                PERSON_NUM = order.PersonNum
+                            };
+
+                var billsToday = bills.Where(x => x.DATE >= DateTime.Today).ToList();
+                var salesToday = 0M;
+                billsToday.GroupBy(x => new { x.ORDER_ID, x.COST, x.PERSON_NUM }).ToList().ForEach(x =>
+                {
+                    salesToday += x.Key.COST * (x.Key.PERSON_NUM ?? 0);
+                    salesToday += x.Sum(c => c.PRICE * (c.QTY ?? 0));
+                });
+
+                var billsMonth = bills.Where(x => x.DATE >= DateTime.Today.AddMonths(-1)).ToList();
+                var salesMonth = 0M;
+                billsMonth.GroupBy(x => new { x.ORDER_ID, x.COST, x.PERSON_NUM }).ToList().ForEach(x =>
+                {
+                    salesMonth += x.Key.COST * (x.Key.PERSON_NUM ?? 0);
+                    salesMonth += x.Sum(c => c.PRICE * (c.QTY ?? 0));
+                });
+
+                var salesYear = 0M;
+                bills.ToList().GroupBy(x => new { x.ORDER_ID, x.COST, x.PERSON_NUM }).ToList().ForEach(x =>
+                {
+                    salesYear += x.Key.COST * (x.Key.PERSON_NUM ?? 0);
+                    salesYear += x.Sum(c => c.PRICE * (c.QTY ?? 0));
+                });
+
+                var billsWeek = bills.Where(x => x.DATE >= DateTime.Today.AddDays(-7)).ToList();
+                var week = billsWeek.GroupBy(x => x.DATE)
+                    .Select(x => new
+                    {
+                        x.Key,
+                        SALES = x.ToList().Sum(c =>
+                        {
+                            var t = 0M;
+                            x.ToList().GroupBy(d => new { d.ORDER_ID, d.COST, d.PERSON_NUM }).ToList()
+                            .ForEach(v =>
+                            {
+                                t += v.Key.COST * (v.Key.PERSON_NUM ?? 0);
+                                t += v.Sum(b => b.PRICE * (b.QTY ?? 0));
+                            });
+                            return t;
+                        }) / x.Count()
+                    }).ToList();
+                return new
+                {
+                    salesToday,
+                    salesMonth,
+                    salesHalfYear = salesYear,
+                    week
+                };
+
+            }
+        }
+
+        
+
     }
 }
