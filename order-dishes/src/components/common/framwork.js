@@ -1,4 +1,6 @@
 class framwork {
+
+  // 数据获取
   static saveJsonInfo(name, info) {
     window.localStorage.setItem(name, JSON.stringify(info));
   }
@@ -9,6 +11,7 @@ class framwork {
     }
     return {};
   }
+  //token 操作
   static saveToken(token) {
     window.localStorage.setItem("accessToken", token);
   }

@@ -33,7 +33,7 @@
                               <v-card-text>
                                 <v-card outlined>
                                   <v-list-item three-line style="padding: 0 0 0 16px">
-                                    <v-list-item-avatar tile size="75">
+                                    <v-list-item-avatar tile size="75"  @click="showImg(food.Urls)">
                                       <v-img v-if="food.Urls.length > 0" :src="food.Urls[0].URL"></v-img>
                                       <!-- <v-img v-if="food.Urls[0].URL!=null" :src="food.Urls[0].URL"></v-img> -->
                                       <v-img v-else style="background: lightgrey;">
@@ -188,12 +188,16 @@
           </v-card-text>
           <v-card-actions class="justify-end">
             <v-row>
-              <v-col cols="6">
+              <!-- <v-col cols="6">
                 <v-btn block @click="dialog.value = false" color="primary" :disabled="personNum==''||personNum<0">加菜
                 </v-btn>
               </v-col>
               <v-col cols="6">
                 <v-btn block @click="dialog.value = false" color="primary" :disabled="personNum==''||personNum<0">新开一单
+                </v-btn>
+              </v-col> -->
+               <v-col cols="12">
+                <v-btn block @click="dialog.value = false" color="primary" :disabled="personNum==''||personNum<0">确认
                 </v-btn>
               </v-col>
             </v-row>
@@ -201,6 +205,12 @@
         </v-card>
       </template>
     </v-dialog>
+    <v-overlay :value="overlay" style="text-align:center">
+      <v-img @click="overlay = false" style="width: 25em;" :src="curImg"></v-img>
+      <v-btn outlined large style="margin-top:10px;" fab @click="overlay = false">
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
+    </v-overlay>
   </div>
 </template>
  
@@ -220,6 +230,9 @@ export default {
     items: [],
     itemsCar: [],
     carNum: 0,
+    curOrderId:"",
+     curImg: "",
+    overlay: false,
   }),
   watch: {
     sheet: function (newValue, oldValue) {
@@ -251,58 +264,49 @@ export default {
     if (self.urlParam.account != null) {
       self.account = self.urlParam.account;
       self.descNum = self.urlParam.descnum;
+      self.personNum = self.urlParam.personNum;
+    }
+    if (self.personNum) {
+      //加菜
+      self.dialog = false;
     }
     self
-      .$http("get", "/api/product/GetProductList?account=" + self.account)
+      .$http(
+        "get",
+        "/api/Product/DeskIsFree?desckNum=" +
+          self.descNum +
+          "&shopAcount=" +
+          self.account
+      )
       .then((response) => {
-        console.log(response);
-        if (response != null) {
-          if (!response.success) {
-            self.$message.error(response.message.content);
-            return;
-          }
-          self.types = [];
-          response.data.TYPES.forEach((type) => {
-            if (
-              type.FOODS.length > 0 &&
-              type.FOODS.filter((x) => x.VISIBLE == "Y").length > 0
-            ) {
-              type.FOODS.forEach((food) => {
-                food.NUM = 0;
-                food.SelectDetailIndex = 0;
-                food.SelectDetail = food.FOOD_DETAIL[0];
-              });
-              self.types.push(type);
-            }
-          });
-          self.shopName = response.data.SHOP_NAME;
+        if (!response.success) {
+          self.$message.error(response.message.content);
+          return;
         }
-      })
-      .catch((err) => {
-        console.log(err.message);
+        if (response.data != true) {
+          //存数据
+          self.curOrderId = response.data;
+          self.$fw.saveJsonInfo("curOrderId", self.curOrderId);
+          if (!self.personNum) {
+            self.$router.replace({
+              path: "/OrderSuccess" + "/" + self.account + "/" + self.descNum,
+            });
+          }
+          else{
+            self.personNum = "";
+          }
+        }
       });
-    // self
-    //   .$http(
-    //     "get",
-    //     "/api/Product/DeskIsOccupied?desckNum=" +
-    //       self.descNum +
-    //       "&shopAcount=" +
-    //       self.account
-    //   )
-    //   .then((response) => {
-    //     if (!response.success) {
-    //       self.$message.error(response.message.content);
-    //       return;
-    //     }
-    //     if (response.data.ORDER.length > 0) {
-    //       //存数据
-    //       self.$router.push({ path: "/OrderSuccess" });
-    //     } else {
-    //     }
-    //   });
+    self.getFoodData();
     // this.$vuetify.theme.themes.light.primary = "#000";//修改主题颜色
   },
   methods: {
+     showImg(Urls) {
+      if (Urls.length > 0) {
+        this.curImg = Urls[0].URL;
+        this.overlay = true;
+      }
+    },
     showCar: function () {
       let self = this;
       self.sheet = true;
@@ -313,6 +317,38 @@ export default {
         });
       });
       this.$store.commit("mutationsChangeCar", this.itemsCar);
+    },
+    getFoodData() {
+      let self = this;
+      self
+        .$http("get", "/api/product/GetProductList?account=" + self.account)
+        .then((response) => {
+          console.log(response);
+          if (response != null) {
+            if (!response.success) {
+              self.$message.error(response.message.content);
+              return;
+            }
+            self.types = [];
+            response.data.TYPES.forEach((type) => {
+              if (
+                type.FOODS.length > 0 &&
+                type.FOODS.filter((x) => x.VISIBLE == "Y").length > 0
+              ) {
+                type.FOODS.forEach((food) => {
+                  food.NUM = 0;
+                  food.SelectDetailIndex = 0;
+                  food.SelectDetail = food.FOOD_DETAIL[0];
+                });
+                self.types.push(type);
+              }
+            });
+            self.shopName = response.data.SHOP_NAME;
+          }
+        })
+        .catch((err) => {
+          console.log(err.message);
+        });
     },
     changeNum: function (food, num) {
       let self = this;
@@ -351,14 +387,13 @@ export default {
       });
       var data = {
         Foods: foods,
+        OrderId: self.curOrderId,
         Account: self.account,
         User: "god",
-        OrderId: "",
         IsPrint: "Y",
         DescNum: self.descNum,
         PersonNum: self.personNum,
       };
-
       self
         .$http("post", "/api/Product/PlaceAnOrder", data)
         .then((response) => {
@@ -366,8 +401,11 @@ export default {
             self.$message.error(response.message.content);
             return;
           }
+           self.$fw.saveJsonInfo("curOrderId",response.data.OrderId);
           self.$message.success("您已成功下单");
-          self.$router.replace({ path: "/OrderSuccess" });
+          self.$router.replace({
+            path: "/OrderSuccess" + "/" + self.account + "/" + self.descNum,
+          });
         })
         .catch((err) => {
           self.$message.success(err);

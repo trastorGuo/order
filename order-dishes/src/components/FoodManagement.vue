@@ -10,7 +10,7 @@
                 <v-card-text>
                   <v-card outlined>
                     <v-list-item three-line style="padding: 0 0 0 16px">
-                      <v-list-item-avatar tile size="75">
+                      <v-list-item-avatar tile size="75" @click="showImg(food.Urls)">
                         <v-img v-if="food.Urls.length > 0" :src="food.Urls[0].URL"></v-img>
                         <v-img v-else style="background: lightgrey;">
                           <div style="width:100%;line-height: 75px;">
@@ -86,11 +86,19 @@
         </v-card>
       </template>
     </v-dialog>
+    <v-overlay :value="overlay" style="text-align:center">
+      <v-img @click="overlay = false" style="width: 25em;" :src="curImg"></v-img>
+      <v-btn outlined large style="margin-top:10px;" fab @click="overlay = false">
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
+    </v-overlay>
   </v-container>
 </template>
 <script>
 export default {
   data: () => ({
+    curImg: "",
+    overlay: false,
     selectedType: null,
     shopName: "",
     account: "",
@@ -214,6 +222,12 @@ export default {
               self.GetFoodData();
             });
         });
+    },
+    showImg(Urls) {
+      if (Urls.length > 0) {
+        this.curImg = Urls[0].URL;
+        this.overlay = true;
+      }
     },
   },
 };

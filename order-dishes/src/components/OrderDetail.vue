@@ -61,7 +61,7 @@
             </v-list-item-content>
             <v-list-item-content>
               <v-list-item-title style="text-align: right;" color="primary">
-                ${{order.COST}} * {{order.PERSON_NUM}}
+                ${{order.COST}} × {{order.PERSON_NUM}}
               </v-list-item-title>
             </v-list-item-content>
           </v-list-item>

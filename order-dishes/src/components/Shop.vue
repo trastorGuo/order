@@ -13,10 +13,10 @@
       <template v-slot:extension>
         <v-tabs v-model="tab" align-with-title>
           <v-tabs-slider color="primary"></v-tabs-slider>
-          <v-tab :to="'/Shop/'+shopInfo.ACCOUNT+'/ShopInfo'">店铺信息</v-tab>
-          <v-tab :to="'/Shop/'+shopInfo.ACCOUNT+'/FoodManagement'"> 菜单管理</v-tab>
-          <v-tab :to="'/Shop/'+shopInfo.ACCOUNT+'/Statistics'">营业统计</v-tab>
-          <v-tab :to="'/Shop/'+shopInfo.ACCOUNT+'/OrderManagement'">订单管理</v-tab>
+          <v-tab :to="'/Shop/'+shopInfo.ACCOUNT+'/ShopInfo'" replace>店铺信息</v-tab>
+          <v-tab :to="'/Shop/'+shopInfo.ACCOUNT+'/FoodManagement'" replace> 菜单管理</v-tab>
+          <v-tab :to="'/Shop/'+shopInfo.ACCOUNT+'/Statistics'" replace>营业统计</v-tab>
+          <v-tab :to="'/Shop/'+shopInfo.ACCOUNT+'/OrderManagement'" replace>订单管理</v-tab>
         </v-tabs>
       </template>
     </v-app-bar>
@@ -48,7 +48,7 @@
       <template>
         <v-card>
           <v-toolbar color="primary" dark>修改密码</v-toolbar>
-          <v-card-text>
+          <v-card-text style="padding: 10px 20px!important;">
             <v-text-field style="margin-right: 16px;" v-model="shopInfo.ACCOUNT" label="账号" disabled
               prepend-icon="mdi-account-supervisor"></v-text-field>
             <v-text-field style="margin-right: 16px;" v-model="oldPassword" label="原密码" type="password"

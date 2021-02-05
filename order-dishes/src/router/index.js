@@ -10,7 +10,7 @@ Vue.use(VueRouter)
 Vue.config.devtools = true;
 export default new VueRouter({
   routes: [{
-      path: '/OrderSuccess',
+      path: '/OrderSuccess/:account/:descnum',
       name: 'OrderSuccess',
       component: resolve => require(['@/components/OrderSuccess'], resolve),
       meta: {
@@ -19,7 +19,7 @@ export default new VueRouter({
       },
     },
     {
-      path: '/food/:account/:descnum',
+      path: '/food/:account/:descnum/:personNum?',
       name: 'food',
       component: resolve => require(['@/components/food'], resolve),
       meta: {
