@@ -1,8 +1,7 @@
 <template>
   <div id="app" style="height: 100%;width: 100%;">
     <div class="backgroud-img-div">
-      <img src="https://gitee.com/trastor/picture/raw/master/huoguo.jpg"
-        style="position: fixed;bottom: 0;width: 100%;" />
+      <img src="http://cdn.trastor.cn/huoguo1.jpg" style="position: fixed;bottom: 0;width: 100%;" />
     </div>
     <div class="login-border-div" style="top: 10%;">
       <!-- <div style="color: white;text-align: center;">周洛御景山庄</div> -->
@@ -17,7 +16,8 @@
           <v-text-field v-model="form.PRINTER" label="打印机" rounded required outlined dense></v-text-field>
           <v-text-field v-model="form.ACCOUNT" label="账号" rounded required outlined dense :rules="accountRules">
           </v-text-field>
-          <v-text-field v-model="form.PASSWORD" label="密码" rounded required type="password" outlined dense :rules="accountRules">
+          <v-text-field v-model="form.PASSWORD" label="密码" rounded required type="password" outlined dense
+            :rules="accountRules">
           </v-text-field>
           <v-text-field v-model="form.PASSWORD2" label="再输一次密码" rounded required type="password" outlined dense>
           </v-text-field>
@@ -69,8 +69,16 @@ export default {
         self.$message.error("两次密码不相同，请再次确认");
         return;
       }
+      var data = {
+        NAME: self.form.NAME,
+        ADDRESS: self.form.ADDRESS,
+        TEL: self.form.TEL,
+        PRINTER: self.form.PRINTER,
+        ACCOUNT: self.form.ACCOUNT,
+        PASSWORD: self.$md5(self.form.ACCOUNT),
+      };
       self
-        .$http("post", "/api/User/AddShop", self.form)
+        .$http("post", "/api/User/AddShop", data)
         .then((responseInfo) => {
           console.log(responseInfo);
           if (!responseInfo.success) {

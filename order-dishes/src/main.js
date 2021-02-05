@@ -14,6 +14,8 @@ import VuejsDialog from 'vuejs-dialog';
 import * as qiniu from 'qiniu-js';
 import FileUpload from 'vue-upload-component'
 import 'vuejs-dialog/dist/vuejs-dialog.min.css';
+import md5 from 'js-md5';
+import moment from 'moment';
 
 Vue.component('file-upload', FileUpload);
 Vue.use(VuejsDialog, {
@@ -26,6 +28,8 @@ Vue.config.devtools = true;
 Vue.prototype.$http = http;
 Vue.prototype.$store = store;
 Vue.prototype.$fw = fw;
+Vue.prototype.$md5 = md5;
+Vue.prototype.$moment = moment;
 
 router.beforeEach((to, from, next) => {
   var token = window.localStorage.getItem("accessToken");

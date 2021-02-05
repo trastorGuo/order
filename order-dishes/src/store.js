@@ -6,11 +6,11 @@ Vue.use(Vuex);
 const state = {
   shopInfo: [],
   itemsCar: [],
-  curFood: {},
   shopName: "",
   descNum: "",
   personNum: 0,
   account: "",
+  selectedType: "",
 };
 
 const mutations = {
@@ -32,8 +32,8 @@ const mutations = {
   mutationsChangeShopInfo(state, obj) {
     return state.shopInfo = obj;
   },
-  mutationsChangeCurFood(state, obj) {
-    return state.curFood = obj;
+  mutationsChangeSelectedType(state, obj) {
+    return state.selectedType = obj;
   },
 }
 

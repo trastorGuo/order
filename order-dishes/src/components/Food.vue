@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <v-card>
-      <v-app-bar   fixed color="primary" elevate-on-scroll>
+      <v-app-bar fixed color="primary" elevate-on-scroll>
         <v-app-bar-nav-icon color="white">
           <!-- <v-icon color="white">mdi-bowl-mix</v-icon> -->
         </v-app-bar-nav-icon>
@@ -28,53 +28,64 @@
                       <v-tab :key="item.TYPE_ID">{{ item.TYPE_NAME }}</v-tab>
                       <v-tab-item :key="'item' + item.TYPE_ID">
                         <template v-for="food in item.FOODS">
-                          <v-card flat :key="food.FOOD_ID">
-                            <v-card-text>
-                              <v-card outlined>
-                                <v-list-item three-line style="padding: 0 0 0 16px">
-                                  <v-list-item-avatar tile size="75">
-                                    <v-img v-if="food.Urls[0].URL!=null" :src="food.Urls[0].URL"></v-img>
-                                    <v-img v-else style="background: lightgrey;">
-                                      <div style="width:100%;line-height: 75px;">
-                                        {{ food.FOOD_NAME }}
+                          <template v-if="food.VISIBLE=='Y'">
+                            <v-card flat :key="food.FOOD_ID">
+                              <v-card-text>
+                                <v-card outlined>
+                                  <v-list-item three-line style="padding: 0 0 0 16px">
+                                    <v-list-item-avatar tile size="75">
+                                      <v-img v-if="food.Urls.length > 0" :src="food.Urls[0].URL"></v-img>
+                                      <!-- <v-img v-if="food.Urls[0].URL!=null" :src="food.Urls[0].URL"></v-img> -->
+                                      <v-img v-else style="background: lightgrey;">
+                                        <div style="width:100%;line-height: 75px;">
+                                          {{ food.FOOD_NAME }}
+                                        </div>
+                                      </v-img>
+                                    </v-list-item-avatar>
+                                    <v-list-item-content>
+                                      <p>{{ food.FOOD_NAME }}</p>
+                                      <v-chip-group mandatory v-show="food.FOOD_DETAIL.length > 1"
+                                        active-class="primary--text" @change="ChangeFoodDetailSelect(food,$event)"
+                                        column v-model="food.SelectDetailIndex">
+                                        <template v-for="detail in food.FOOD_DETAIL">
+                                          <v-chip x-small :key="detail.DETAIL_ID">
+                                            {{detail.DETAIL_NAME}}
+                                          </v-chip>
+                                        </template>
+                                      </v-chip-group>
+                                      <div class="d-flex" style="height: 40px">
+                                        <p style="line-height: 40px;" class="primary--text">
+                                          ${{ food.SelectDetail.DETAIL_PRICE}}</p>
+                                        <v-spacer></v-spacer>
+                                        <div v-if="food.INVENTORY==0" style="margin-right: 20px;">
+                                          <v-avatar color="white" size="50">
+                                            <span class="grey--text headline">售罄</span>
+                                          </v-avatar>
+                                        </div>
+                                        <template v-else>
+                                          <v-btn v-if="food.NUM > 0" icon>
+                                            <v-icon dense color="primary" @click="changeNum(food, -1)">
+                                              mdi-minus-circle-outline</v-icon>
+                                          </v-btn>
+                                          <div style="width: 30px" v-if="food.NUM > 0">
+                                            <v-text-field type="number" readonly v-model="food.NUM"
+                                              style="padding-top: 0" />
+                                          </div>
+                                          <v-btn icon>
+                                            <v-icon dense color="primary" @click="changeNum(food, 1)">
+                                              mdi-plus-circle-outline
+                                            </v-icon>
+                                          </v-btn>
+                                        </template>
+
                                       </div>
-                                    </v-img>
-                                  </v-list-item-avatar>
-                                  <v-list-item-content>
-                                    <p>{{ food.FOOD_NAME }}</p>
-                                    <v-chip-group mandatory v-show="food.FOOD_DETAIL.length > 1"
-                                      active-class="primary--text" @change="ChangeFoodDetailSelect(food,$event)" column
-                                      v-model="food.SelectDetailIndex">
-                                      <template v-for="detail in food.FOOD_DETAIL">
-                                        <v-chip x-small :key="detail.DETAIL_ID">
-                                          {{detail.DETAIL_NAME}}
-                                        </v-chip>
-                                      </template>
-                                    </v-chip-group>
-                                    <div class="d-flex" style="height: 40px">
-                                      <p style="line-height: 40px;" class="primary--text">
-                                        ${{ food.SelectDetail.DETAIL_PRICE}}</p>
-                                      <v-spacer></v-spacer>
-                                      <v-btn v-if="food.NUM > 0" icon>
-                                        <v-icon dense color="primary" @click="changeNum(food, -1)">
-                                          mdi-minus-circle-outline</v-icon>
-                                      </v-btn>
-                                      <div style="width: 30px" v-if="food.NUM > 0">
-                                        <v-text-field type="number" readonly v-model="food.NUM"
-                                          style="padding-top: 0" />
-                                      </div>
-                                      <v-btn icon>
-                                        <v-icon dense color="primary" @click="changeNum(food, 1)">
-                                          mdi-plus-circle-outline
-                                        </v-icon>
-                                      </v-btn>
-                                    </div>
-                                  </v-list-item-content>
-                                </v-list-item>
-                              </v-card>
-                            </v-card-text>
-                          </v-card>
-                        </template>
+                                    </v-list-item-content>
+                                  </v-list-item>
+                                </v-card>
+                              </v-card-text>
+                            </v-card>
+                          </template>
+                          </template?>
                       </v-tab-item>
                     </template>
                   </v-tabs>
@@ -94,11 +105,11 @@
                   <v-card>
                     <v-toolbar color="primary">
                       <v-app-bar-nav-icon>
-                        <v-icon   color="white">
+                        <v-icon color="white">
                           mdi-cart-outline
                         </v-icon>
                       </v-app-bar-nav-icon>
-                      <v-toolbar-title style="color: white;" >购物车</v-toolbar-title>
+                      <v-toolbar-title style="color: white;">购物车</v-toolbar-title>
                       <v-spacer></v-spacer>
                       <v-btn @click="sheet = !sheet" icon>
                         <v-icon color="white">mdi-close-circle-outline</v-icon>
@@ -109,7 +120,8 @@
                         <template v-for="food in itemsCar">
                           <v-list-item :key="food.FOOD_ID" v-if="food.NUM > 0">
                             <v-list-item-avatar tile size="40">
-                              <v-img v-if="food.Urls[0].URL!=null" :src="food.Urls[0].URL"></v-img>
+                              <v-img v-if="food.Urls.length > 0" :src="food.Urls[0].URL"></v-img>
+                              <!-- <v-img v-if="food.Urls[0].URL!=null" :src="food.Urls[0].URL"></v-img> -->
                               <v-img v-else style="background: lightgrey;">
                                 <div style="width:100%;line-height: 40px;">
                                   {{ food.FOOD_NAME }}
@@ -175,8 +187,16 @@
               required></v-text-field>
           </v-card-text>
           <v-card-actions class="justify-end">
-            <v-btn block @click="dialog.value = false" color="primary" :disabled="personNum==''||personNum<0">确认
-            </v-btn>
+            <v-row>
+              <v-col cols="6">
+                <v-btn block @click="dialog.value = false" color="primary" :disabled="personNum==''||personNum<0">加菜
+                </v-btn>
+              </v-col>
+              <v-col cols="6">
+                <v-btn block @click="dialog.value = false" color="primary" :disabled="personNum==''||personNum<0">新开一单
+                </v-btn>
+              </v-col>
+            </v-row>
           </v-card-actions>
         </v-card>
       </template>
@@ -232,7 +252,6 @@ export default {
       self.account = self.urlParam.account;
       self.descNum = self.urlParam.descnum;
     }
-    // this.$vuetify.theme.themes.light.primary = "#000";//修改主题颜色
     self
       .$http("get", "/api/product/GetProductList?account=" + self.account)
       .then((response) => {
@@ -244,7 +263,10 @@ export default {
           }
           self.types = [];
           response.data.TYPES.forEach((type) => {
-            if (type.FOODS.length > 0) {
+            if (
+              type.FOODS.length > 0 &&
+              type.FOODS.filter((x) => x.VISIBLE == "Y").length > 0
+            ) {
               type.FOODS.forEach((food) => {
                 food.NUM = 0;
                 food.SelectDetailIndex = 0;
@@ -259,6 +281,26 @@ export default {
       .catch((err) => {
         console.log(err.message);
       });
+    // self
+    //   .$http(
+    //     "get",
+    //     "/api/Product/DeskIsOccupied?desckNum=" +
+    //       self.descNum +
+    //       "&shopAcount=" +
+    //       self.account
+    //   )
+    //   .then((response) => {
+    //     if (!response.success) {
+    //       self.$message.error(response.message.content);
+    //       return;
+    //     }
+    //     if (response.data.ORDER.length > 0) {
+    //       //存数据
+    //       self.$router.push({ path: "/OrderSuccess" });
+    //     } else {
+    //     }
+    //   });
+    // this.$vuetify.theme.themes.light.primary = "#000";//修改主题颜色
   },
   methods: {
     showCar: function () {
@@ -310,9 +352,9 @@ export default {
       var data = {
         Foods: foods,
         Account: self.account,
-        User: "trastor",
+        User: "god",
         OrderId: "",
-        IsPrint: "N",
+        IsPrint: "Y",
         DescNum: self.descNum,
         PersonNum: self.personNum,
       };
@@ -325,7 +367,7 @@ export default {
             return;
           }
           self.$message.success("您已成功下单");
-          self.$router.push({ path: "/OrderSuccess" });
+          self.$router.replace({ path: "/OrderSuccess" });
         })
         .catch((err) => {
           self.$message.success(err);

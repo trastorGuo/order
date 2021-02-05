@@ -5,6 +5,12 @@
         <v-form ref="form" lazy-validation style="padding: 20px;">
           <v-text-field outlined dense rounded v-model="type.TYPE_NAME" label="类别" disabled></v-text-field>
           <v-text-field outlined dense rounded v-model="food.FOOD_NAME" label="商品名称"></v-text-field>
+          <v-switch style="padding:0;margin:0;" v-model="isBigInventory" label="无限库存" inset>
+          </v-switch>
+          <v-text-field outlined dense rounded v-if="!isBigInventory" v-model="food.INVENTORY" type="number" label="库存">
+          </v-text-field>
+          <v-switch style="padding:0;margin:0;" v-model="food.VISIBLE" label="是否展示" inset>
+          </v-switch>
           <v-switch style="padding:0;margin:0;" @change="changeHasDetail()" v-model="hasDetail" label="是否有多项价格" inset>
           </v-switch>
           <v-text-field outlined dense rounded v-if="!hasDetail" v-model="food.PRICE" label="价格" type="number">
@@ -27,8 +33,20 @@
             </v-col>
           </v-row>
           <file-upload ref="upload" v-model="files" @input-file="inputFile" @input-filter="inputFilter">
-            上传文件
+            <v-icon large>mdi-camera</v-icon>
+            上传图片
           </file-upload>
+          <v-overlay :value="isLoading">
+            <v-progress-circular indeterminate size="64"></v-progress-circular>
+          </v-overlay>
+          <v-img style="width: 100px; height: 100px;margin: 0 auto;margin-bottom:10px;overflow: visible;"
+            v-for="(URL,index) in food.Urls" :src="URL.URL" :key="URL.URL">
+            <v-fab-transition>
+              <v-btn style="right: 0;" fab x-small absolute top right @click="deleteImg(food,index)">
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
+            </v-fab-transition>
+          </v-img>
           <!-- <button v-show="!$refs.upload || !$refs.upload.active" @click.prevent="$refs.upload.active = true"
             type="button">开始上传</button>
           <button v-show="$refs.upload && $refs.upload.active" @click.prevent="$refs.upload.active = false"
@@ -54,27 +72,36 @@ export default {
       FOOD_NAME: "",
       FOOD_DETAIL: [],
       Urls: [],
-      PRICE: 0,
+      PRICE: null,
+      VISIBLE: true,
+      INVENTORY: null,
       DETAIL_ID: "",
     },
     isAdd: true,
     type: {},
     hasDetail: false,
+    isLoading: false,
+    isBigInventory: true,
   }),
   mounted() {
-    this.type = this.$store.state.curFood.type;
+    let curFood = this.$fw.getJsonInfo("curFood");
+    this.type = curFood.type;
     if (
-      this.$store.state.curFood.food != null &&
-      this.$store.state.curFood.food != ""
+      curFood.food != null &&
+      curFood.food != ""
     ) {
       this.isAdd = false;
-      this.food = this.$store.state.curFood.food;
+      this.food = curFood.food;
       if (this.food.FOOD_DETAIL.length == 1) {
         this.food.PRICE = this.food.FOOD_DETAIL[0].DETAIL_PRICE;
         this.food.DETAIL_ID = this.food.FOOD_DETAIL[0].DETAIL_ID;
         this.food.FOOD_DETAIL = [];
+        this.food.VISIBLE = this.food.VISIBLE == "Y" ? true : false;
       } else if (this.food.FOOD_DETAIL.length > 1) {
         this.hasDetail = true;
+      }
+      if (this.food.INVENTORY != -1) {
+        this.isBigInventory = false;
       }
     }
   },
@@ -96,24 +123,25 @@ export default {
         }
       }
       var data = {
-        Type: self.type,
-        Food: self.food,
+        Type: JSON.parse(JSON.stringify(self.type)),
+        Food: JSON.parse(JSON.stringify(self.food)),
       };
       if (!this.hasDetail) {
-        if (data.Food.PRICE == "") {
+        if (data.Food.PRICE == "" || data.Food.PRICE ==null) {
           this.$message.error("价格不能为空");
           return;
         }
-        6;
         data.Food.FOOD_DETAIL = [];
         data.Food.FOOD_DETAIL.push({
-          DETAIL_NAME: null,
+          DETAIL_NAME: "",
           DETAIL_ID: data.Food.DETAIL_ID,
           DETAIL_PRICE: data.Food.PRICE,
           Urls: [],
         });
       }
-
+      data.Type.FOODS = [];
+      data.Food.VISIBLE = data.Food.VISIBLE ? "Y" : "N";
+      data.Food.INVENTORY = self.isBigInventory ? -1 : data.Food.INVENTORY;
       self
         .$http(
           "post",
@@ -126,6 +154,7 @@ export default {
             return;
           }
           self.$message.success(self.isAdd ? "商品新增成功" : "商品修改成功");
+          // self.$router.replace({path:""});
           self.$router.go(-1);
         });
     },
@@ -133,7 +162,7 @@ export default {
       if (this.hasDetail) {
         this.food.FOOD_DETAIL.push({
           DETAIL_NAME: "",
-          DETAIL_PRICE: 0,
+          DETAIL_PRICE: "",
           Urls: [],
         });
       } else {
@@ -143,43 +172,34 @@ export default {
     addDetail() {
       this.food.FOOD_DETAIL.push({
         DETAIL_NAME: "",
-        DETAIL_PRICE: 0,
+        DETAIL_PRICE: "",
         Urls: [],
       });
     },
     inputFile: function (newFile, oldFile) {
-      // if (newFile && oldFile && !newFile.active && oldFile.active) {
-      //   // 获得相应数据
-      //   console.log("response", newFile.response);
-      //   if (newFile.xhr) {
-      //     //  获得响应状态码
-      //     console.log("status", newFile.xhr.status);
-      //   }
-      //   //七牛
-      //   const config = {
-      //     useCdnDomain: true,
-      //     region: "z2",
-      //   };
-      //   const observable = qiniu.upload(
-      //     this.files[0],
-      //     "111",
-      //     token,
-      //     putExtra,
-      //     config
-      //   );
-      //   const subscription = observable.subscribe("trastor"); // 上传开始
-      //   // or
-      //   const subscription = observable.subscribe(next, error, complete); // 这样传参形式也可以
-      //   subscription.unsubscribe(); // 上传取消
-      // }
+      let self = this;
+      self.isLoading = true;
+      self.$http("get", "/api/Qiniu/GetToken").then((response) => {
+        var formData = new FormData();
+        formData.append("file", newFile.file);
+        formData.append("token", response.data);
+        axios({
+          headers: {
+            "content-type": "multipart/form-data",
+          },
+          method: "post",
+          url: "http://up-z2.qiniup.com",
+          data: formData,
+        }).then(function (response) {
+          self.isLoading = false;
+          if (response != null && response.key != null) {
+            self.food.Urls.push({
+              URL: "http://cdn.trastor.cn/" + response.key,
+            });
+          }
+        });
+      });
     },
-    /**
-     * Pretreatment
-     * @param  Object|undefined   newFile   读写
-     * @param  Object|undefined   oldFile   只读
-     * @param  Function           prevent   阻止回调
-     * @return undefined
-     */
     inputFilter: function (newFile, oldFile, prevent) {
       if (newFile && !oldFile) {
         // 过滤不是图片后缀的文件
@@ -188,13 +208,9 @@ export default {
           return prevent();
         }
       }
-
-      // 创建 blob 字段 用于图片预览
-      newFile.blob = "";
-      let URL = window.URL || window.webkitURL;
-      if (URL && URL.createObjectURL) {
-        newFile.blob = URL.createObjectURL(newFile.file);
-      }
+    },
+    deleteImg(food, index) {
+      food.Urls.splice(index, 1);
     },
   },
 };

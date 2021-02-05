@@ -2,7 +2,6 @@
   <div id="app" style="height: 1000px;width: 100%;">
     <div>
       <v-card class="mx-auto" max-width="344">
-
         <v-card-text style="padding: 15px!important;margin-top:15px;">
           <v-form ref="form" lazy-validation style="text-align: center;margin:20px;">
             <v-fab-transition v-if="isEdit">
@@ -32,39 +31,50 @@
             <v-text-field v-model="shopInfo.ADDRESS" label="店铺地址" outlined dense :disabled="isEdit"></v-text-field>
             <v-text-field v-model="shopInfo.TEL" label="联系方式" :rules="telRules" outlined dense :disabled="isEdit">
             </v-text-field>
-            <v-text-field v-model="shopInfo.PrinterCode" label="打印机号" outlined dense :disabled="isEdit"></v-text-field>
-            <v-expansion-panels multiple v-model="panel">
-              <v-expansion-panel>
-                <v-expansion-panel-header>桌号</v-expansion-panel-header>
-                <v-expansion-panel-content>
-                  <div class="pa-4">
-                    <v-chip-group active-class="primary--text" column>
-                      <v-chip draggable v-for="desk in shopInfo.DeskList" :key="desk.ID" :close="!isEdit"
-                        @click="showQr(desk)" @click:close="DeleteDesk()">
-                        <!-- {{ desk.DeskCount}}({{desk.DescDesc}}) -->
-                        {{ desk.DeskCount}}
-                      </v-chip>
-                      <v-chip key="tagAdd" @click="isShowAddDesk=true">
-                        <v-icon>
-                          mdi-plus-circle-outline
-                        </v-icon>
-                      </v-chip>
-                    </v-chip-group>
-                  </div>
-                </v-expansion-panel-content>
-              </v-expansion-panel>
-            </v-expansion-panels>
-            <div class="qrcode" ref="qrCodeUrl" style="margin-top: 10px;"></div>
-            <div class="qrcodesave" v-show="showDownload">
-              <span @click.stop="downloadE">
-                <v-icon>
-                  mdi-download
-                </v-icon>下载
-              </span>
-            </div>
+            <v-text-field v-model="shopInfo.PRINTER" label="打印机号" outlined dense :disabled="isEdit"></v-text-field>
+            <v-text-field v-model="shopInfo.CAPITATION" label="茶位费描述" outlined dense :disabled="isEdit"></v-text-field>
+            <v-text-field v-model="shopInfo.COST" label="茶位费(元/人)" outlined dense :disabled="isEdit" type="number">
+            </v-text-field>
           </v-form>
         </v-card-text>
       </v-card>
+      <v-expansion-panels multiple v-model="panel" style="padding: 15px!important;margin-top:15px;">
+        <v-expansion-panel>
+          <v-expansion-panel-header>桌号管理</v-expansion-panel-header>
+          <v-expansion-panel-content>
+            <div class="pa-4">
+              <v-chip-group active-class="primary--text" column>
+                <v-chip key="tagAdd" @click="isShowAddDesk=true">
+                  <v-icon small>
+                    mdi-plus-circle-outline
+                  </v-icon>
+                </v-chip>
+                <v-chip key="tagEdit" @click="isDelDesk=!isDelDesk">
+                  <v-icon small>
+                    mdi-pencil-outline
+                  </v-icon>
+                </v-chip>
+                <v-chip draggable v-for="desk in shopInfo.DeskList" :key="desk.ID" :close="isDelDesk"
+                  @click="showQr(desk)" @click:close="DeleteDesk(desk)">
+                  <!-- {{ desk.DeskCount}}({{desk.DescDesc}}) -->
+                  {{ desk.DeskCount}}
+                </v-chip>
+              </v-chip-group>
+            </div>
+            <div style="text-align: center;">
+              <div class="qrcode" ref="qrCodeUrl" style="margin-top: 10px;"></div>
+              <div class="qrcodesave" v-show="showDownload">
+                <span @click.stop="downloadE">
+                  <v-icon>
+                    mdi-download
+                  </v-icon>下载
+                </span>
+              </div>
+            </div>
+          </v-expansion-panel-content>
+
+        </v-expansion-panel>
+      </v-expansion-panels>
     </div>
     <v-dialog persistent v-model="isShowAddDesk">
       <template>
@@ -90,6 +100,7 @@
         </v-card>
       </template>
     </v-dialog>
+
   </div>
 </template>
  <style   scoped>
@@ -109,32 +120,33 @@ export default {
       ADDRESS: "",
       ACCOUNT: "",
       PASSWORD: "",
+      PRINTER: "",
+      COST: 0,
+      CAPITATION: "茶位费",
       TEL: "",
       URLS: [],
       DeskList: [],
     },
     panel: [0],
     isEdit: true,
+    isDelDesk: false,
     showDownload: false,
     isShowAddDesk: false,
+    isShowChangePw: false,
     curDesk: null,
     newName: "",
     newDesc: "",
+    
     telRules: [
       (value) => {
         const pattern = /^(0|86|17951)?(13[0-9]|15[012356789]|17[678]|18[0-9]|14[57])[0-9]{8}$/;
         return pattern.test(value) || "无效的手机号码";
       },
     ],
-    // AccountRules: [
-    //   (value) => {
-    //     const pattern = /^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,}$/;
-    //     return pattern.test(value) || "长度需大于6位，由数字和字符组成";
-    //   },
-    // ],
   }),
   mounted() {
-    this.shopInfo = JSON.parse(window.localStorage.getItem("shopInfo"));
+    // this.shopInfo = JSON.parse(window.localStorage.getItem("shopInfo"));
+    this.shopInfo = this.$fw.getJsonInfo("shopInfo");
   },
   methods: {
     Save() {
@@ -151,12 +163,21 @@ export default {
           self.updatePageShopInfo();
         });
     },
-    DeleteDesk() {
+    DeleteDesk(desk) {
       let self = this;
       self.$dialog
         .confirm("确认删除此桌号？")
         .then(function (dialog) {
-          self.$message.error("暂时咩做，莫急");
+          self
+            .$http("get", "/api/Product/DeleteDesk?descNum=" + desk.DeskCount)
+            .then((response) => {
+              if (!response.success) {
+                self.$message.error(response.message.content);
+                return;
+              }
+              self.$message.success("删除成功");
+              self.updatePageShopInfo();
+            });
         })
         .catch(function () {
           console.log("Clicked on cancel");
@@ -164,7 +185,6 @@ export default {
     },
     AddDesk() {
       let self = this;
-
       var data = {
         deskNum: self.newName,
         deskDesc: self.newDesc,
@@ -182,14 +202,13 @@ export default {
             self.$message.error(response.message.content);
             return;
           }
-          self.newTypeName = "";
+          self.newName = "";
           self.isShowAddDesk = false;
-          self.$message.success("桌号新增成功");
+          self.$message.success(response.data);
           // self.shopInfo.DeskList = response.data;
           self.updatePageShopInfo();
         });
     },
-
     updatePageShopInfo() {
       let self = this;
       self
@@ -211,6 +230,7 @@ export default {
     showQr(desk) {
       this.$refs.qrCodeUrl.innerHTML = "";
       var text =
+        "http://" +
         document.location.host +
         "/#/food/" +
         this.shopInfo.ACCOUNT +

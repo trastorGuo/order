@@ -4,7 +4,7 @@
       <img src="http://cdn.trastor.cn/huoguo1.jpg" style="position: fixed;bottom: 0;width: 100%;" />
     </div>
     <div class="login-border-div ">
-      <!-- <div style="color: white;text-align: center;">周洛御景山庄</div> -->
+      <!-- <div style="color: white;text-align: center;">后台管理</div> -->
       <div class="login-border">
         <v-form ref="form" lazy-validation style="text-align: center;">
           <v-text-field v-model="name" label="账号" rounded required outlined dense></v-text-field>
@@ -26,8 +26,8 @@ export default {
     shopInfo: {},
   }),
   mounted() {
-    let token =this.$fw.getToken();
-    this.shopInfo =this.$fw.getShopInfo();
+    let token = this.$fw.getToken();
+    this.shopInfo = this.$fw.getJsonInfo("shopInfo");
     if ((token != null || token != "") && this.shopInfo.ACCOUNT != null)
       this.getShopInfo(this.shopInfo.ACCOUNT);
   },
@@ -45,7 +45,10 @@ export default {
       self
         .$http(
           "get",
-          "/api/user/login?name=" + self.name + "&pwd=" + self.password
+          "/api/user/login?name=" +
+            self.name +
+            "&pwd=" +
+            self.$md5(self.password)
         )
         .then((response) => {
           console.log(response);
@@ -77,7 +80,7 @@ export default {
             }
             self.$message.success("登陆成功！");
             self.$store.commit("mutationsChangeShopInfo", response.data);
-            self.$fw.saveShopInfo(response.data);
+            self.$fw.saveJsonInfo("shopInfo", response.data);
             self.$router.replace({
               path: "/shop/" + ACCOUNT + "/ShopInfo",
             });

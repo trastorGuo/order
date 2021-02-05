@@ -6,7 +6,6 @@
 // import Register from '@/components/Register'
 // import AddShop from '@/components/AddShop'
 
-
 Vue.use(VueRouter)
 Vue.config.devtools = true;
 export default new VueRouter({
@@ -56,6 +55,15 @@ export default new VueRouter({
       },
     },
     {
+      path: '/OrderDetail',
+      name: 'OrderDetail',
+      component: resolve => require(['@/components/OrderDetail'], resolve),
+      meta: {
+        title: "订单详情",
+        needLogin: true,
+      },
+    },
+    {
       path: '/Shop/:account',
       name: 'Shop',
       component: resolve => require(['@/components/Shop'], resolve),
@@ -77,6 +85,14 @@ export default new VueRouter({
         component: resolve => require(['@/components/foodManagement'], resolve),
         meta: {
           title: "菜单管理",
+          needLogin: true,
+        },
+      }, {
+        path: 'Statistics',
+        name: 'Statistics',
+        component: resolve => require(['@/components/Statistics'], resolve),
+        meta: {
+          title: "营业统计",
           needLogin: true,
         },
       }, {
