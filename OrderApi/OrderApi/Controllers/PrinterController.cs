@@ -29,6 +29,14 @@ namespace OrderApi.Controllers
         }
 
 
+        [HttpGet]
+        public bool ClearPrintStatus(string account)
+        {
+            PrinterDomain.Current.clearPrintStatus(account);
+            return true;
+        }
+
+
         //public bool Print()
         //{
         //    PrinterDomain.Current.print()

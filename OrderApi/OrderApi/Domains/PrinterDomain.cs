@@ -67,6 +67,66 @@ namespace OrderApi.Domains
             return strResult;
         }
 
+        public string clearPrintStatus(string account)
+        {
+            string sn = "";
+            using(var db = new OrderDB())
+            {
+                sn = (from p in db.Shops
+                         where p.ACCOUNT == account && p.STATE == 'A'
+                         select p).FirstOrDefault()?.PrinterCode;
+            }
+            if (string.IsNullOrEmpty(sn))
+            {
+                throw new Exception("当前用户未维护打印机");
+            }
+            HttpWebRequest req = (HttpWebRequest)HttpWebRequest.Create(URL);
+            req.Method = "POST";
+
+            UTF8Encoding encoding = new UTF8Encoding();
+
+            string postData = "sn=" + sn;
+
+            int itime = DateTimeToStamp(System.DateTime.Now);//时间戳秒数
+            string stime = itime.ToString();
+            string sig = sha1(USER, UKEY, stime);
+
+            //公共参数
+            postData += ("&user=" + USER);
+            postData += ("&stime=" + stime);
+            postData += ("&sig=" + sig);
+            postData += ("&apiname=" + "Open_delPrinterSqs");
+
+            byte[] data = encoding.GetBytes(postData);
+
+            req.ContentType = "application/x-www-form-urlencoded";
+            req.ContentLength = data.Length;
+            Stream resStream = req.GetRequestStream();
+
+            resStream.Write(data, 0, data.Length);
+            resStream.Close();
+
+            HttpWebResponse response;
+            string strResult;
+            try
+            {
+                response = (HttpWebResponse)req.GetResponse();
+                StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8);
+                strResult = reader.ReadToEnd();
+            }
+            catch (WebException ex)
+            {
+                response = (HttpWebResponse)ex.Response;
+                strResult = response.StatusCode.ToString();//错误信息
+            }
+
+            response.Close();
+            req.Abort();
+
+            return strResult;
+        }
+
+
         public int DateTimeToStamp(System.DateTime time)
         {
             System.DateTime startTime = TimeZone.CurrentTimeZone.ToLocalTime(new System.DateTime(1970, 1, 1)); return (int)(time - startTime).TotalSeconds;
@@ -90,7 +150,7 @@ namespace OrderApi.Domains
 
 
         //方法1
-        public string print(PlaceAnOrder order)
+        public string print(PlaceAnOrder order, bool addDish)
         {
             var SN = "";
             var name = "";
@@ -114,7 +174,7 @@ namespace OrderApi.Domains
 
             //拼凑订单内容时可参考如下格式
             string orderInfo;
-            orderInfo = $"<CB>{name}</CB><BR>";//标题字体如需居中放大,就需要用标签套上
+            orderInfo = $"<CB>{name}</CB>    {(addDish ? "加菜" : "")}<BR>";//标题字体如需居中放大,就需要用标签套上
             orderInfo += $"桌号:{order.DescNum}    用餐人数：{order.PersonNum}<BR>";
             orderInfo += "名称　　　　　 单价  数量 金额<BR>";
             orderInfo += "--------------------------------<BR>";
@@ -137,10 +197,12 @@ namespace OrderApi.Domains
                 }
 
             }
-            if (!string.IsNullOrEmpty(capitation))
+            if (!string.IsNullOrEmpty(capitation) && !addDish)
             {
-                orderInfo += $"{capitation}：￥{cost}*{order.PersonNum}    ￥{cost * order.PersonNum}元<BR>";
+                orderInfo += $"{GetNameWithSameLenght(capitation, 14)}￥{decimal.Round(cost),-6}{order.PersonNum,-3}￥{cost * order.PersonNum}<BR>";
+                total += cost * order.PersonNum;
             }
+            
             orderInfo += "--------------------------------<BR>";
             orderInfo += $"合计：{total}元<BR>";
             orderInfo += $"订餐时间：{DateTime.Now}<BR>";
@@ -238,7 +300,8 @@ namespace OrderApi.Domains
             }
             if (!string.IsNullOrEmpty(capitation))
             {
-                orderInfo += $"{capitation}：￥{cost}*{order.PersonNum}    ￥{cost * order.PersonNum}元<BR>";
+                orderInfo += $"{GetNameWithSameLenght(capitation, 14)}￥{decimal.Round(cost),-6}{order.PersonNum,-3}￥{cost * order.PersonNum}<BR>";
+                total += cost * order.PersonNum;
             }
             orderInfo += "--------------------------------<BR>";
             orderInfo += $"合计：{total}元<BR>";
