@@ -10,14 +10,13 @@
                 <v-card-text>
                   <v-card outlined>
                     <v-list-item three-line style="padding: 0 0 0 16px">
-                      <v-list-item-avatar tile size="75">
+                      <v-list-item-avatar tile size="75" @click="showImg(food.Urls)">
                         <v-img v-if="food.Urls.length > 0" :src="food.Urls[0].URL"></v-img>
-                              <v-img v-else style="background: lightgrey;">
-                                <div style="width:100%;line-height: 75px;">
-                                  {{ food.FOOD_NAME }}
-                                </div>
-                              </v-img>
-                        <!-- <v-img :src="food.Urls[0].URL"></v-img> -->
+                        <v-img v-else style="background: lightgrey;">
+                          <div style="width:100%;line-height: 75px;">
+                            {{ food.FOOD_NAME }}
+                          </div>
+                        </v-img>
                       </v-list-item-avatar>
                       <v-list-item-content>
                         <p>{{ food.FOOD_NAME }}</p>
@@ -36,6 +35,10 @@
                           <v-icon color="primary" @click="EditFood(food)">
                             mdi-pencil-outline</v-icon>
                           <v-spacer></v-spacer>
+                          <v-icon color="primary" @click="DelFood(food)">
+                            mdi-delete-outline
+                          </v-icon>
+                          <v-spacer></v-spacer>
                         </div>
                       </v-list-item-content>
                     </v-list-item>
@@ -46,6 +49,9 @@
             <div style="text-align: center;margin: 10px 0;">
               <v-icon color="primary" @click="EditFood(null)">
                 mdi-plus-circle-outline
+              </v-icon>
+              <v-icon style="margin-left:10px;" v-if="item.FOODS.length==0" color="primary" @click="DelType(item)">
+                mdi-delete-outline
               </v-icon>
             </div>
           </v-tab-item>
@@ -80,11 +86,19 @@
         </v-card>
       </template>
     </v-dialog>
+    <v-overlay :value="overlay" style="text-align:center">
+      <v-img @click="overlay = false" style="width: 25em;" :src="curImg"></v-img>
+      <v-btn outlined large style="margin-top:10px;" fab @click="overlay = false">
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
+    </v-overlay>
   </v-container>
 </template>
 <script>
 export default {
   data: () => ({
+    curImg: "",
+    overlay: false,
     selectedType: null,
     shopName: "",
     account: "",
@@ -101,22 +115,31 @@ export default {
     }
     self.GetFoodData();
   },
+  watch: {
+    selectedType(newValue, oldValue) {
+      this.$store.commit("mutationsChangeSelectedType", newValue);
+    },
+  },
   methods: {
-    AddType: function () {
+    AddType() {
       let self = this;
       self.isShowAddType = false;
       var data = {
-        SEQ:self.newSeq,
+        SEQ: self.newSeq,
         ICON: "",
         TYPE_NAME: self.newTypeName,
       };
       self.$http("post", "/api/Product/AddType", data).then((response) => {
+        self.newTypeName = "";
+        if (!response.success) {
+          self.$message.error(response.message.content);
+          return;
+        }
         self.$message.success("类别新增成功");
         self.GetFoodData();
-        self.newTypeName = "";
       });
     },
-    GetFoodData: function () {
+    GetFoodData() {
       let self = this;
       self
         .$http("get", "/api/product/GetProductList?account=" + self.account)
@@ -136,36 +159,75 @@ export default {
                 food.SelectDetail = food.FOOD_DETAIL[0];
               });
             });
-            self.newSeq = self.types.length+1;
+            self.newSeq = self.types.length + 1;
+            if (self.$store.state.selectedType > 0) {
+              self.selectedType = self.$store.state.selectedType;
+            }
           }
         })
         .catch((err) => {
           console.log(err.message);
         });
     },
-    EditFood: function (food) {
-      if (food == null) {
-        this.$store.commit("mutationsChangeCurFood", {
-          type: this.types[this.selectedType],
-          food: "",
-        });
-      } else {
-        this.$store.commit("mutationsChangeCurFood", {
-          type: this.types[this.selectedType],
-          food: food,
-        });
-      }
+    EditFood(food) {
+      this.$fw.saveJsonInfo("curFood", {
+        type: this.types[this.selectedType],
+        food: food == null ? "" : food,
+      });
       this.$router.push({
         path: "/AddFood",
       });
     },
-    ChangeFoodDetailSelect: function (food, index) {
+    ChangeFoodDetailSelect(food, index) {
       if (typeof index != "undefined") {
         food.SelectDetail = food.FOOD_DETAIL[index];
       } else {
         food.SelectDetail = null;
       }
       this.$forceUpdate();
+    },
+    DelFood(food) {
+      let self = this;
+      self.$dialog
+        .confirm("确认删除商品[" + food.FOOD_NAME + "]？")
+        .then(function (dialog) {
+          self
+            .$http("get", "/api/Product/DeleteProduct?id=" + food.FOOD_ID)
+            .then((response) => {
+              if (!response.success) {
+                self.$message.error(response.message.content);
+                return;
+              }
+              self.$message.success("删除成功");
+              self.GetFoodData();
+            });
+        });
+    },
+    DelType(type) {
+      let self = this;
+      if (type.FOODS.length > 0) {
+        self.$message.error("如需删除分类，请先将该分类下的商品全部删除再操作");
+      }
+      self.$dialog
+        .confirm("确认删除分类[" + type.TYPE_NAME + "]？")
+        .then(function (dialog) {
+          self
+            .$http("get", "/api/Product/DeleteType?id=" + type.TYPE_ID)
+            .then((response) => {
+              if (!response.success) {
+                self.$message.error(response.message.content);
+                return;
+              }
+              self.$message.success("删除成功");
+              self.GetFoodData();
+            });
+        });
+    },
+    showImg(Urls) {
+      if (Urls.length > 0) {
+        this.curImg = Urls[0].URL;
+        this.overlay = true;
+      }
     },
   },
 };

@@ -20,7 +20,7 @@ axios.interceptors.response.use(function (response) {
   console.log(response);
   return response.data;
 }, function (error) {
-    if (response.status == 401) {
+    if (error.status == 401) {
       Message.error("登陆已失效，请重新登陆");
       fw.clearLogin();
       this.$router.push({
@@ -28,6 +28,7 @@ axios.interceptors.response.use(function (response) {
       });
       return null;
     }
+    Message.error(error.message);
   return Promise.reject(error);
 });
 
