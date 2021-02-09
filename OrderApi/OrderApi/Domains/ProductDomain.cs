@@ -132,8 +132,8 @@ namespace OrderApi.Domains
                     db.Update(food);
 
                     //删除商品图片
-                    var imgIds = model.Food.Urls.Select(x => x.IMG_ID);
-                    db.Images.Where(x => imgIds.Contains(x.ID)).Delete();
+                    var imgIds = model.Food.FOOD_ID;
+                    db.Images.Where(x => x.ConnectId == imgIds).Delete();
 
                     //新增食物图片
                     foreach (var id in model.Food.Urls)
@@ -437,14 +437,13 @@ namespace OrderApi.Domains
                     {
                         throw new Exception("当前类别不存在！");
                     }
-                    curType.STATE = 'D';
 
                     db.FoodTypes
                         .Where(c => c.SEQ > curType.SEQ && c.ShopId == SHOP_ID && c.STATE == 'A')
                         .Set(c => c.SEQ, c => c.SEQ - 1)
                         .Update();
 
-                    db.Update(curType);
+                    db.Delete(curType);
                     db.CommitTransaction();
                 }
                 catch (Exception ex)
@@ -461,6 +460,7 @@ namespace OrderApi.Domains
         public object PlaceAnOrder(JToken jt)
         {
             var model = JsonConvert.DeserializeObject<PlaceAnOrder>(jt.ToString());
+            bool AddDish = true;
             using (var db = new OrderDB())
             {
                 db.BeginTransaction();
@@ -469,6 +469,7 @@ namespace OrderApi.Domains
                     var shopId = (from p in db.Shops where p.ACCOUNT == model.Account select p).FirstOrDefault();
                     if (string.IsNullOrEmpty(model.OrderId))
                     {
+                        AddDish = false;
                         var head = new OrderHead()
                         {
                             ID = Guid.NewGuid().ToString("N").ToUpper(),
@@ -530,14 +531,17 @@ namespace OrderApi.Domains
                         };
                         db.Insert(foodDetail);
 
-                        food.INVENTORY -= 1;
+                        if (food.INVENTORY > 0)
+                        {
+                            food.INVENTORY -= 1;
+                        }
                         db.Update(food);
                     }
                     db.CommitTransaction();
                     var msg = "";
                     if (!string.IsNullOrEmpty(shopId.PrinterCode) && model.IsPrint == "Y")
                     {
-                        msg = PrinterDomain.Current.print(model);
+                        msg = PrinterDomain.Current.print(model, AddDish);
                     }
                     return new
                     {
@@ -553,28 +557,38 @@ namespace OrderApi.Domains
             }
         }
 
-        public object GetOrders(string id, string datetime, string to, string userOrdered, string SHOP_ID)
+        public object GetOrders(string account, string id, string datetime, string to, string userOrdered)
         {
             using (var db = new OrderDB())
             {
+                var shopId = (from p in db.Shops
+                             where p.ACCOUNT == account && p.STATE == 'A'
+                             select p).FirstOrDefault();
+                if (shopId is null)
+                {
+                    throw new Exception("商店不存在！");
+                }
                 var iquery = from order in db.OrderHeads
                              from dtl in db.OrderDetails.LeftJoin(pr => pr.PrrentOrderId == order.ID && pr.STATE == order.STATE)
                              from food in db.OrderDetailFoods.LeftJoin(pr => pr.OrderDetailId == dtl.ID && pr.STATE == order.STATE)
+                             from tea in db.Shops.LeftJoin(x=>x.ID == order.ShopId && x.STATE == 'A')
                              where (string.IsNullOrEmpty(id) ? order.STATE == 'A' : order.ID == id)
                              && (string.IsNullOrEmpty(datetime) ? order.STATE == 'A' : order.DatetimeCreated >= Convert.ToDateTime(datetime))
                              && (string.IsNullOrEmpty(to) ? order.STATE == 'A' : order.DatetimeCreated <= Convert.ToDateTime(to))
                              && (string.IsNullOrEmpty(userOrdered) ? order.STATE == 'A' : food.UserOrder == userOrdered)
                              && order.STATE == 'A'
-                             && order.ShopId == SHOP_ID
+                             && order.ShopId == shopId.ID
                              select new
                              {
                                  DATETIME_CREATED = order.DatetimeCreated,
                                  ORDER_DATE = order.DatetimeCreated,
                                  ORDER_ID = order.ID,
+                                 COST = order.COST,
+                                 tea.CAPITATION,
                                  IS_CLOSE = order.IsClose,
                                  IS_PRINT = order.IsPrint,
                                  PERSON_NUM = order.PersonNum,
-                                 DESC_NUM = order.DescNum,
+                                 DESK_NUM = order.DescNum,
                                  ORDER_DETAIL_ID = food.OrderDetailId,
                                  food.QTY,
                                  USER_ORDER = food.UserOrder,
@@ -587,7 +601,7 @@ namespace OrderApi.Domains
                     .Select(x => new
                     {
                         DATE = x.Key.Date,
-                        ORDER = x.ToList().GroupBy(v => new { v.USER_ORDER, v.ORDER_ID, v.IS_CLOSE, v.IS_PRINT, v.PERSON_NUM, v.DESC_NUM, v.ORDER_DATE })
+                        ORDER = x.ToList().GroupBy(v => new { v.COST, v.CAPITATION, v.USER_ORDER, v.ORDER_ID, v.IS_CLOSE, v.IS_PRINT, v.PERSON_NUM, v.DESK_NUM, v.ORDER_DATE })
                         .Select(v => new
                         {
                             v.Key.ORDER_DATE,
@@ -595,8 +609,10 @@ namespace OrderApi.Domains
                             v.Key.ORDER_ID,
                             v.Key.IS_PRINT,
                             v.Key.IS_CLOSE,
+                            v.Key.COST,
+                            v.Key.CAPITATION,
                             v.Key.PERSON_NUM,
-                            v.Key.DESC_NUM,
+                            v.Key.DESK_NUM,
                             FOODS = v.ToList().GroupBy(c => new { c.ORDER_DETAIL_ID, c.QTY, c.USER_ORDER, c.FOOD_DETAIL_NAME, c.PRICE, c.URL })
                             .Select(c => new
                             {
@@ -610,7 +626,11 @@ namespace OrderApi.Domains
                         })
                     }).ToList();
 
-                return result.OrderByDescending(x=>x.DATE).ToList();
+                return new
+                {
+                    data = result.OrderByDescending(x => x.DATE).ToList(),
+                    name = shopId.NAME
+                };
             }
         }
 
@@ -660,7 +680,7 @@ namespace OrderApi.Domains
         }
 
 
-        public string DeskIsOccupied(string desckNum, string shopAcount)
+        public object DeskIsFree(string desckNum, string shopAcount)
         {
             using (var db = new OrderDB())
             {
@@ -669,7 +689,16 @@ namespace OrderApi.Domains
                              orderby p.DatetimeCreated descending
                              where p.DescNum == desckNum && p.ShopId == shopId
                              select p).FirstOrDefault();
-                return (order != null && order.IsClose == 'N') ? order.ID : "";
+                var count = (from p in db.ShopDesks
+                            where p.ShopId == shopId && p.DeskCount == desckNum && p.STATE == 'A'
+                            select p).Count();
+
+                if(count == 0)
+                {
+                    throw new Exception("桌号不存在");
+                }
+                
+                return (order != null && order.IsClose == 'N') ? order.ID : true ;
             }
         }
 
@@ -799,5 +828,15 @@ namespace OrderApi.Domains
             
         }
 
+        public object CloseAllOrders(string SHOP_ID)
+        {
+            using(var db = new OrderDB())
+            {
+                db.OrderHeads.Where(x => x.ShopId == SHOP_ID && x.STATE == 'A')
+                    .Set(x => x.IsClose, 'Y')
+                    .Update();
+                return "取消完成！";
+            }
+        }
     }
 }

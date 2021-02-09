@@ -203,6 +203,8 @@ namespace OrderApi.Controllers
                     shopInfo.PASSWORD,
                     shopInfo.TEL,
                     URLS = urls,
+                    shopInfo.CAPITATION,
+                    shopInfo.COST,
                     DeskList,
                     IS_ADMIN = shopInfo.IsAdmin == "Y"
                 };
@@ -301,10 +303,10 @@ namespace OrderApi.Controllers
                 });
 
                 var billsWeek = bills.Where(x => x.DATE >= DateTime.Today.AddDays(-7)).ToList();
-                var week = billsWeek.GroupBy(x => x.DATE)
+                var week = billsWeek.GroupBy(x => x.DATE.Date)
                     .Select(x => new
                     {
-                        x.Key,
+                        DATE = x.Key,
                         SALES = x.ToList().Sum(c =>
                         {
                             var t = 0M;
@@ -316,7 +318,7 @@ namespace OrderApi.Controllers
                             });
                             return t;
                         }) / x.Count()
-                    }).ToList();
+                    }).OrderBy(x=>x.DATE).ToList();
                 return new
                 {
                     salesToday,

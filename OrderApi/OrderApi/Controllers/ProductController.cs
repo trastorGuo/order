@@ -88,10 +88,9 @@ namespace OrderApi.Controllers
        
 
         [HttpGet]
-        [Auth]
-        public object GetOrders(string id, string datetime, string to, string userOrdered)
+        public object GetOrders(string account, string id, string datetime, string to, string userOrdered)
         {
-            return  ProductDomain.Current.GetOrders(id, datetime, to, userOrdered, SHOP_ID);
+            return  ProductDomain.Current.GetOrders(account, id, datetime, to, userOrdered);
         }
 
 
@@ -111,9 +110,9 @@ namespace OrderApi.Controllers
         /// <param name="shopAcount"></param>
         /// <returns></returns>
         [HttpGet]
-        public string DeskIsOccupied(string desckNum, string shopAcount)
+        public object DeskIsFree(string desckNum, string shopAcount)
         {
-            return  ProductDomain.Current.DeskIsOccupied(desckNum, shopAcount);
+            return ProductDomain.Current.DeskIsFree(desckNum, shopAcount);
         }
 
         
@@ -159,6 +158,14 @@ namespace OrderApi.Controllers
         public object Reprint(string orderId)
         {
             return ProductDomain.Current.Reprint(orderId, ACCOUNT);
+        }
+
+
+        [HttpGet]
+        [Auth]
+        public object CloseAllOrders()
+        {
+            return ProductDomain.Current.CloseAllOrders(SHOP_ID);
         }
 
        
