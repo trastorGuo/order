@@ -61,21 +61,25 @@
                 </v-chip>
               </v-chip-group>
             </div>
-            <div style="text-align: center;">
-              <div class="qrcode" ref="qrCodeUrl" style="margin-top: 10px;"></div>
-              <div class="qrcodesave" v-show="showDownload">
-                <span @click.stop="downloadE">
+            <div style="text-align: center;" v-show="showDownload">
+              <div id="newImg" v-show="showOldQr">
+                <vue-qr :text="qrSrc" :size="qrSize" />
+                <div style="text-align:center">{{qrInfo}}</div>
+              </div>
+              <div v-show="!showOldQr">
+                <img style="width:100%;" :src="qrCodeUrl" />
+                <span @click="setImage()">
                   <v-icon>
                     mdi-download
-                  </v-icon>下载
+                  </v-icon>长按二维码保存
                 </span>
               </div>
             </div>
           </v-expansion-panel-content>
-
         </v-expansion-panel>
       </v-expansion-panels>
     </div>
+
     <v-dialog persistent v-model="isShowAddDesk">
       <template>
         <v-card>
@@ -112,9 +116,18 @@
 }
 </style>
 <script>
-import QRCode from "qrcodejs2";
+import vueQr from "vue-qr";
+import html2canvas from "html2canvas";
+
 export default {
+  components: {
+    vueQr,
+  },
   data: () => ({
+    qrSize: 200,
+    qrInfo: "",
+    qrCodeUrl: "",
+    showOldQr: true,
     shopInfo: {
       NAME: "",
       ADDRESS: "",
@@ -127,6 +140,7 @@ export default {
       URLS: [],
       DeskList: [],
     },
+    qrSrc: "ssss",
     panel: [0],
     isEdit: true,
     isDelDesk: false,
@@ -136,7 +150,7 @@ export default {
     curDesk: null,
     newName: "",
     newDesc: "",
-    
+
     telRules: [
       (value) => {
         const pattern = /^(0|86|17951)?(13[0-9]|15[012356789]|17[678]|18[0-9]|14[57])[0-9]{8}$/;
@@ -228,33 +242,28 @@ export default {
         });
     },
     showQr(desk) {
-      this.$refs.qrCodeUrl.innerHTML = "";
-      var text =
+      this.qrSrc =
         "http://" +
         document.location.host +
         "/#/food/" +
         this.shopInfo.ACCOUNT +
         "/" +
         desk.DeskCount;
-      var qrcode = new QRCode(this.$refs.qrCodeUrl, {
-        text: text, // 需要转换为二维码的内容
-        width: 150,
-        height: 150,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H,
-      });
+      this.qrInfo = this.shopInfo.NAME + "——第" + desk.DeskCount + "桌";
       this.showDownload = true;
       this.curDesk = desk;
-    },
-    downloadE() {
-      //下载
-      var canvasData = this.$refs.qrCodeUrl.getElementsByTagName("canvas");
-      var a = document.createElement("a");
-      var event = new MouseEvent("click"); // 创建一个单击事件
-      a.href = canvasData[0].toDataURL("image/png");
-      a.download = this.shopInfo.NAME + "-" + this.curDesk.DeskCount;
-      a.dispatchEvent(event); // 触发a的单击事件
+      let self = this;
+      self.showOldQr = true;
+      setTimeout(() => {
+        var opts = { useCORS: true };
+        html2canvas(document.getElementById("newImg"), opts).then(function (
+          canvas
+        ) {
+          var imgUri = canvas.toDataURL("image/jpeg", 2); // 获取生成的图片的url
+          self.qrCodeUrl = imgUri;
+          self.showOldQr = false;
+        });
+      }, 10);
     },
   },
 };
