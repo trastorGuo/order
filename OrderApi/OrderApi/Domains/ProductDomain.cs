@@ -480,7 +480,10 @@ namespace OrderApi.Domains
                             STATE = 'A',
                             DescNum = model.DescNum,
                             IsClose = 'N',
-                            IsPrint = Convert.ToChar(model.IsPrint)
+                            IsPrint = Convert.ToChar(model.IsPrint),
+                            MEMO = model.MEMO,
+                            TEL = model.TEL,
+                            CustomName = model.CUSTOM_NAME
                         };
                         db.Insert(head);
                         model.OrderId = head.ID;
@@ -594,14 +597,17 @@ namespace OrderApi.Domains
                                  USER_ORDER = food.UserOrder,
                                  FOOD_DETAIL_NAME = food.FoodDetailName,
                                  PRICE = food.Price,
-                                 food.URL
+                                 food.URL,
+                                 CUSTOM_NAME = order.CustomName,
+                                 order.TEL,
+                                 order.MEMO
                              };
 
                 var result = iquery.AsEnumerable().GroupBy(x => x.DATETIME_CREATED.Date)
                     .Select(x => new
                     {
                         DATE = x.Key.Date,
-                        ORDER = x.ToList().GroupBy(v => new { v.COST, v.CAPITATION, v.USER_ORDER, v.ORDER_ID, v.IS_CLOSE, v.IS_PRINT, v.PERSON_NUM, v.DESK_NUM, v.ORDER_DATE })
+                        ORDER = x.ToList().GroupBy(v => new { v.COST, v.CAPITATION, v.USER_ORDER, v.ORDER_ID, v.IS_CLOSE, v.IS_PRINT, v.PERSON_NUM, v.DESK_NUM, v.ORDER_DATE, v.CUSTOM_NAME, v.MEMO, v.TEL })
                         .Select(v => new
                         {
                             v.Key.ORDER_DATE,
@@ -613,6 +619,9 @@ namespace OrderApi.Domains
                             v.Key.CAPITATION,
                             v.Key.PERSON_NUM,
                             v.Key.DESK_NUM,
+                            v.Key.TEL,
+                            v.Key.MEMO,
+                            v.Key.CUSTOM_NAME,
                             FOODS = v.ToList().GroupBy(c => new { c.ORDER_DETAIL_ID, c.QTY, c.USER_ORDER, c.FOOD_DETAIL_NAME, c.PRICE, c.URL })
                             .Select(c => new
                             {

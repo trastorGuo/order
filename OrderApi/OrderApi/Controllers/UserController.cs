@@ -206,7 +206,9 @@ namespace OrderApi.Controllers
                     shopInfo.CAPITATION,
                     shopInfo.COST,
                     DeskList,
-                    IS_ADMIN = shopInfo.IsAdmin == "Y"
+                    IS_ADMIN = shopInfo.IsAdmin == "Y",
+                    IS_SHOW_MEMO = shopInfo.IsShowMemo == 'Y',
+                    IS_SHOW_USER_COUNT = shopInfo.IsShowUserCount == null || shopInfo.IsShowUserCount == 'N'
                 };
             }
         }

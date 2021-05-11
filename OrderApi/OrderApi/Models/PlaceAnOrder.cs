@@ -14,6 +14,9 @@ namespace OrderApi.Models
         public string DescNum { get; set; }
         public string IsPrint { get; set; }
         public int PersonNum { get; set; }
+        public string TEL { get; set; }
+        public string CUSTOM_NAME { get; set; }
+        public string MEMO { get; set; }
     }
 
     public class OrderDetail
