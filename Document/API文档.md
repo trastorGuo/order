@@ -162,6 +162,11 @@
         "ID":"",//有ID修改，无ID新增
         "URL":""
     }],
+    "PARAMS":[{
+        "PARAM_NAME_ID":'',//参数项的ID，无表示新增，编辑需带上
+        "PARAM_NAME":'',//参数名称
+        "PARAM_VALUE":''//参数值
+    }],
     "CAPITATION":'',
     "COST":0
 }
@@ -253,6 +258,11 @@
     "URLS":[{
         "ID":"",
         "URL":""
+    }],
+    "PARAMS":[{
+        "PARAM_NAME_ID":'',
+        "PARAM_NAME":'',
+        "PARAM_VALUE":''
     }]
 }
 ````
