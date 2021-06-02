@@ -64,8 +64,8 @@ namespace OrderApi
                         ValidAudience = "Security:Tokens:Audience",
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("Security:Tokens:Key")),
-                        ValidateLifetime = true,
-                        ClockSkew = TimeSpan.FromSeconds(1)
+                        //ValidateLifetime = true,
+                        //ClockSkew = TimeSpan.FromSeconds(1)
                     };
                     options.Events = new JwtBearerEvents
                     {
@@ -77,13 +77,13 @@ namespace OrderApi
                             {
                                 return Task.CompletedTask;
                             }
-                            //var tokenHandler = new JwtSecurityTokenHandler();
-                            //var jt = tokenHandler.ReadJwtToken(context.Token);
-                            //var validTo = jt.ValidTo;
-                            //if (validTo < DateTime.UtcNow)
-                            //{
-                            //    throw new ErrorException("令牌已过期", System.Net.HttpStatusCode.Unauthorized);
-                            //}
+                            var tokenHandler = new JwtSecurityTokenHandler();
+                            var jt = tokenHandler.ReadJwtToken(context.Token);
+                            var validTo = jt.ValidTo;
+                            if (validTo < DateTime.UtcNow)
+                            {
+                                throw new Exception("令牌已过期");
+                            }
                             return Task.CompletedTask;
                         }
                     };

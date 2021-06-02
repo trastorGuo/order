@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OrderApi.Domains;
+using OrderApi.Models;
 using OrderApi.MsgCommon;
 using System;
 using System.Collections.Generic;
@@ -129,6 +130,7 @@ namespace OrderApi.Controllers
                     var CAPITATION = jt["CAPITATION"]?.ToString();
                     var COST = Convert.ToInt32(string.IsNullOrEmpty(jt["COST"]?.ToString()) ? 0 : jt["COST"].ToString());
                     var urls = JsonConvert.DeserializeObject<List<IMAGE>>(jt["URLS"].ToString());
+                    var PARAMS = JsonConvert.DeserializeObject<List<ParamsValue>>(jt["PARAMS"].ToString());
                     var m = (from p in db.Shops where p.ACCOUNT == account select p).FirstOrDefault();
                     m.UserModified = ACCOUNT;
                     m.DatetimeModified = DateTime.Now;
@@ -165,6 +167,61 @@ namespace OrderApi.Controllers
                             db.Insert(u);
                         }
                     }
+                    foreach (var _sp in PARAMS)
+                    {
+                        var sysParam = (from p in db.SysParams where p.ShopId == m.ID && p.ParamName == _sp.PARAM_NAME select p).FirstOrDefault();
+                        if (sysParam == null)
+                        {
+                            var sp = new SysParam
+                            {
+                                ID = Guid.NewGuid().ToString("N").ToUpper(),
+                                UserCreated = ACCOUNT,
+                                DatetimeCreated = DateTime.Now,
+                                STATE = 'A',
+                                ParamName = _sp.PARAM_NAME,
+                                ShopId = m.ID
+                            };
+                            db.Insert(sp);
+                            var val = new SysParamValue
+                            {
+                                ID = Guid.NewGuid().ToString("N").ToUpper(),
+                                UserCreated = ACCOUNT,
+                                DatetimeCreated = DateTime.Now,
+                                STATE = 'A',
+                                ParamValue = _sp.PARAM_VALUE,
+                                ParamNameId = _sp.PARAM_NAME_ID
+                            };
+                            db.Insert(val);
+                        }
+                        else
+                        {
+                            sysParam.DatetimeModified = DateTime.Now;
+                            sysParam.ParamName = _sp.PARAM_NAME;
+                            db.Update(sysParam);
+
+                            var val = (from p in db.SysParamValues where p.ParamNameId == sysParam.ID select p).FirstOrDefault();
+                            if (val == null)
+                            {
+                                val = new SysParamValue
+                                {
+                                    ID = Guid.NewGuid().ToString("N").ToUpper(),
+                                    UserCreated = ACCOUNT,
+                                    DatetimeCreated = DateTime.Now,
+                                    STATE = 'A',
+                                    ParamValue = _sp.PARAM_VALUE,
+                                    ParamNameId = _sp.PARAM_NAME_ID
+                                };
+                                db.Insert(val);
+                            }
+                            else
+                            {
+                                val.ParamValue = _sp.PARAM_VALUE;
+                                val.DatetimeModified = DateTime.Now;
+                                db.Update(val);
+                            }
+                        }
+                    }
+
                     db.Update(m);
                     db.CommitTransaction();
                 }
@@ -194,6 +251,14 @@ namespace OrderApi.Controllers
                     x.DescDesc,
                     x.DeskCount
                 }).ToList();
+                var ps = from p in db.SysParams
+                         from pv in db.SysParamValues.LeftJoin(c => c.ParamNameId == p.ID)
+                         select new
+                         {
+                             PARAM_NAME_ID = p.ID,
+                             PARAM_NAME = p.ParamName,
+                             PARAM_VALUE = pv.ParamValue
+                         };
                 return new
                 {
                     PRINTER = shopInfo.PrinterCode,
@@ -205,6 +270,7 @@ namespace OrderApi.Controllers
                     URLS = urls,
                     shopInfo.CAPITATION,
                     shopInfo.COST,
+                    PARAMS = ps.ToList(),
                     DeskList,
                     IS_ADMIN = shopInfo.IsAdmin == "Y",
                     IS_SHOW_MEMO = shopInfo.IsShowMemo == 'Y',
