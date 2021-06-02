@@ -51,8 +51,8 @@ export default {
     ],
     accountRules: [
       (value) => {
-        const pattern = /^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,}$/;
-        return pattern.test(value) || "长度需大于5位，由数字和字符组成";
+        const pattern = /[0-9a-zA-Z]{3,}/;
+        return pattern.test(value) || "长度需大于3位，且只包含数字或字符";
       },
     ],
   }),

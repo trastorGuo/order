@@ -51,9 +51,26 @@
             type="button">开始上传</button>
           <button v-show="$refs.upload && $refs.upload.active" @click.prevent="$refs.upload.active = false"
             type="button">停止上传</button> -->
-          <v-btn style="width:100%;margin:8px 0; " color="#73ce5f" rounded dark @click="Save()">
-            保存
-          </v-btn>
+
+          <v-row  v-show="isAdd">
+            <v-col cols="6" style="padding:8px;">
+              <v-btn style="width:100%; " color="#73ce5f" rounded dark @click="Save()">
+                保存
+              </v-btn>
+            </v-col>
+            <v-col cols="6" style="padding:8px;">
+              <v-btn style="width:100%; " color="#73ce5f" rounded dark @click="Save(true)">
+                保存并新增
+              </v-btn>
+            </v-col>
+          </v-row>
+          <v-row  v-show="!isAdd">
+            <v-col cols="12" style="padding:8px;">
+              <v-btn style="width:100%; " color="#73ce5f" rounded dark @click="Save()">
+                保存
+              </v-btn>
+            </v-col>
+          </v-row>
         </v-form>
       </v-card-text>
     </v-card>
@@ -86,10 +103,7 @@ export default {
   mounted() {
     let curFood = this.$fw.getJsonInfo("curFood");
     this.type = curFood.type;
-    if (
-      curFood.food != null &&
-      curFood.food != ""
-    ) {
+    if (curFood.food != null && curFood.food != "") {
       this.isAdd = false;
       this.food = curFood.food;
       if (this.food.FOOD_DETAIL.length == 1) {
@@ -106,7 +120,7 @@ export default {
     }
   },
   methods: {
-    Save() {
+    Save(isContinueAdd = false) {
       let self = this;
       if (self.food.FOOD_NAME == "") {
         this.$message.error("商品名称不能为空");
@@ -127,7 +141,7 @@ export default {
         Food: JSON.parse(JSON.stringify(self.food)),
       };
       if (!this.hasDetail) {
-        if (data.Food.PRICE == "" || data.Food.PRICE ==null) {
+        if (data.Food.PRICE == "" || data.Food.PRICE == null) {
           this.$message.error("价格不能为空");
           return;
         }
@@ -155,7 +169,20 @@ export default {
           }
           self.$message.success(self.isAdd ? "商品新增成功" : "商品修改成功");
           // self.$router.replace({path:""});
-          self.$router.go(-1);
+          if (isContinueAdd && self.isAdd ) {
+            self.files = [];
+            self.food = {
+              FOOD_NAME: "",
+              FOOD_DETAIL: [],
+              Urls: [],
+              PRICE: null,
+              VISIBLE: true,
+              INVENTORY: null,
+              DETAIL_ID: "",
+            };
+          } else {
+            self.$router.go(-1);
+          }
         });
     },
     changeHasDetail() {

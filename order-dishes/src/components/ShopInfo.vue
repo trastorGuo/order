@@ -78,6 +78,32 @@
           </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
+      <!-- <v-expansion-panels multiple v-model="panel" style="padding: 15px!important;margin-top:15px;">
+        <v-expansion-panel>
+          <v-expansion-panel-header>配置项</v-expansion-panel-header>
+          <v-expansion-panel-content>
+            <div class="pa-4">
+              <v-icon color="primary" @click="addDetail()">
+                mdi-plus-circle-outline
+              </v-icon>
+              <v-row v-for="(PARAM,index) in shopInfo.PARAMS" :key="PARAM.index">
+                <v-col cols="6">
+                  <v-text-field rounded outlined dense v-model="PARAM.PARAM_NAME" label="名称"></v-text-field>
+                </v-col>
+                <v-col cols="5">
+                  <v-text-field rounded outlined dense v-model="PARAM.PARAM_VALUE" label="值" type="number">
+                  </v-text-field>
+                </v-col>
+                <v-col cols="1" style="line-height: 40px;">
+                  <v-icon v-if="index > 1" color="primary" @click="shopInfo.PARAMS.splice(index,1)">
+                    mdi-delete-outline
+                  </v-icon>
+                </v-col>
+              </v-row>
+            </div>
+          </v-expansion-panel-content>
+        </v-expansion-panel>
+      </v-expansion-panels> -->
     </div>
 
     <v-dialog persistent v-model="isShowAddDesk">
