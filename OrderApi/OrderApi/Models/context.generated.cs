@@ -5,20 +5,21 @@
 // </auto-generated>
 //---------------------------------------------------------------------------------------------------
 
-#pragma warning disable 1591
+#pragma warning disable 1573, 1591
 
 using System;
 using System.Linq;
 
 using LinqToDB;
+using LinqToDB.Configuration;
 using LinqToDB.Mapping;
 
-namespace OrderApi
+namespace DataModels
 {
 	/// <summary>
 	/// Database       : order
-	/// Data Source    : 45.40.200.146
-	/// Server Version : 11.00.3000
+	/// Data Source    : 42.194.131.197
+	/// Server Version : 8.0.28
 	/// </summary>
 	public partial class OrderDB : LinqToDB.Data.DataConnection
 	{
@@ -26,12 +27,14 @@ namespace OrderApi
 		public ITable<FoodDetail>      FoodDetails      { get { return this.GetTable<FoodDetail>(); } }
 		public ITable<FoodType>        FoodTypes        { get { return this.GetTable<FoodType>(); } }
 		public ITable<IMAGE>           Images           { get { return this.GetTable<IMAGE>(); } }
+		public ITable<LOG>             LOGS             { get { return this.GetTable<LOG>(); } }
 		public ITable<OrderDetail>     OrderDetails     { get { return this.GetTable<OrderDetail>(); } }
 		public ITable<OrderDetailFood> OrderDetailFoods { get { return this.GetTable<OrderDetailFood>(); } }
 		public ITable<OrderHead>       OrderHeads       { get { return this.GetTable<OrderHead>(); } }
 		public ITable<SHOP>            Shops            { get { return this.GetTable<SHOP>(); } }
 		public ITable<ShopDesk>        ShopDesks        { get { return this.GetTable<ShopDesk>(); } }
-		public ITable<TEST>            Tests            { get { return this.GetTable<TEST>(); } }
+		public ITable<SysParam>        SysParams        { get { return this.GetTable<SysParam>(); } }
+		public ITable<SysParamValue>   SysParamValues   { get { return this.GetTable<SysParamValue>(); } }
 
 		public OrderDB()
 		{
@@ -46,147 +49,577 @@ namespace OrderApi
 			InitMappingSchema();
 		}
 
+		public OrderDB(LinqToDBConnectionOptions options)
+			: base(options)
+		{
+			InitDataContext();
+			InitMappingSchema();
+		}
+
+		public OrderDB(LinqToDBConnectionOptions<OrderDB> options)
+			: base(options)
+		{
+			InitDataContext();
+			InitMappingSchema();
+		}
+
 		partial void InitDataContext  ();
 		partial void InitMappingSchema();
 	}
 
-	[Table(Schema="dbo", Name="FOOD")]
+	[Table("FOOD")]
 	public partial class FOOD
 	{
+		/// <summary>
+		/// 数据行?ID?号
+		/// </summary>
 		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		/// <summary>
+		/// 创建数据行的时间
+		/// </summary>
 		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		/// <summary>
+		/// 创建人
+		/// </summary>
 		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		/// <summary>
+		/// 更新数据行的时间
+		/// </summary>
 		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		/// <summary>
+		/// 更新数据行的用户
+		/// </summary>
 		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		/// <summary>
+		/// 可用状态
+		/// </summary>
 		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
+		/// <summary>
+		/// 类别ID
+		/// </summary>
 		[Column("TYPE_ID"),              Nullable         ] public string    TypeId           { get; set; } // varchar(80)
+		/// <summary>
+		/// 商品名称
+		/// </summary>
 		[Column(),                       Nullable         ] public string    NAME             { get; set; } // varchar(80)
+		/// <summary>
+		/// TAG
+		/// </summary>
 		[Column(),                       Nullable         ] public string    TAG              { get; set; } // varchar(80)
+		/// <summary>
+		/// 数量
+		/// </summary>
+		[Column(),                                 NotNull] public decimal   INVENTORY        { get; set; } // decimal(18,0)
+		/// <summary>
+		/// 是否可见
+		/// </summary>
+		[Column(),                                 NotNull] public char      VISIBLE          { get; set; } // char(1)
 	}
 
-	[Table(Schema="dbo", Name="FOOD_DETAIL")]
+	[Table("FOOD_DETAIL")]
 	public partial class FoodDetail
 	{
+		/// <summary>
+		/// 数据行?ID?号
+		/// </summary>
 		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		/// <summary>
+		/// 创建数据行的时间
+		/// </summary>
 		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		/// <summary>
+		/// 创建人
+		/// </summary>
 		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		/// <summary>
+		/// 更新数据行的时间
+		/// </summary>
 		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		/// <summary>
+		/// 更新数据行的用户
+		/// </summary>
 		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		/// <summary>
+		/// 可用状态
+		/// </summary>
 		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
+		/// <summary>
+		/// 商品ID
+		/// </summary>
 		[Column("FOOD_ID"),              Nullable         ] public string    FoodId           { get; set; } // varchar(80)
+		/// <summary>
+		/// 明细名称
+		/// </summary>
 		[Column(),                       Nullable         ] public string    NAME             { get; set; } // varchar(80)
-		[Column(),                       Nullable         ] public decimal?  PRICE            { get; set; } // decimal(18, 2)
+		/// <summary>
+		/// 价格
+		/// </summary>
+		[Column(),                       Nullable         ] public decimal?  PRICE            { get; set; } // decimal(18,2)
+		/// <summary>
+		/// 描述
+		/// </summary>
+		[Column(),                       Nullable         ] public string    DESC             { get; set; } // varchar(240)
+		/// <summary>
+		/// 描述
+		/// </summary>
 		[Column("DETAIL_DESC"),          Nullable         ] public string    DetailDesc       { get; set; } // varchar(240)
 	}
 
-	[Table(Schema="dbo", Name="FOOD_TYPE")]
+	[Table("FOOD_TYPE")]
 	public partial class FoodType
 	{
+		/// <summary>
+		/// 数据行?ID?号
+		/// </summary>
 		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		/// <summary>
+		/// 创建数据行的时间
+		/// </summary>
 		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		/// <summary>
+		/// 创建人
+		/// </summary>
 		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		/// <summary>
+		/// 更新数据行的时间
+		/// </summary>
 		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		/// <summary>
+		/// 更新数据行的用户
+		/// </summary>
 		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		/// <summary>
+		/// 可用状态
+		/// </summary>
 		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
+		/// <summary>
+		/// 店铺ID
+		/// </summary>
 		[Column("SHOP_ID"),              Nullable         ] public string    ShopId           { get; set; } // varchar(80)
+		/// <summary>
+		/// 食物类别名
+		/// </summary>
 		[Column("TYPE_NAME"),            Nullable         ] public string    TypeName         { get; set; } // varchar(80)
+		/// <summary>
+		/// 图标表ID
+		/// </summary>
+		[Column("IMG_ID"),               Nullable         ] public string    ImgId            { get; set; } // varchar(80)
+		/// <summary>
+		/// 图标
+		/// </summary>
 		[Column(),                       Nullable         ] public string    ICON             { get; set; } // varchar(80)
+		/// <summary>
+		/// SEQ
+		/// </summary>
+		[Column(),                                 NotNull] public decimal   SEQ              { get; set; } // decimal(18,0)
 	}
 
-	[Table(Schema="dbo", Name="IMAGE")]
+	[Table("IMAGE")]
 	public partial class IMAGE
 	{
+		/// <summary>
+		/// 数据行?ID?号
+		/// </summary>
 		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		/// <summary>
+		/// 创建数据行的时间
+		/// </summary>
 		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		/// <summary>
+		/// 创建人
+		/// </summary>
 		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		/// <summary>
+		/// 更新数据行的时间
+		/// </summary>
 		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		/// <summary>
+		/// 更新数据行的用户
+		/// </summary>
 		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		/// <summary>
+		/// 可用状态
+		/// </summary>
 		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
+		/// <summary>
+		/// 关联表ID
+		/// </summary>
 		[Column("CONNECT_ID"),                     NotNull] public string    ConnectId        { get; set; } // varchar(80)
+		/// <summary>
+		/// URL
+		/// </summary>
 		[Column(),                       Nullable         ] public string    URL              { get; set; } // varchar(240)
 	}
 
-	[Table(Schema="dbo", Name="ORDER_DETAIL")]
+	[Table("LOGS")]
+	public partial class LOG
+	{
+		/// <summary>
+		/// 数据行?ID?号
+		/// </summary>
+		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		/// <summary>
+		/// 创建数据行的时间
+		/// </summary>
+		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		/// <summary>
+		/// 创建人
+		/// </summary>
+		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		/// <summary>
+		/// 更新数据行的时间
+		/// </summary>
+		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		/// <summary>
+		/// 更新数据行的用户
+		/// </summary>
+		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		/// <summary>
+		/// 可用状态
+		/// </summary>
+		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
+		/// <summary>
+		/// 请求参数
+		/// </summary>
+		[Column(),                       Nullable         ] public string    PARAMS           { get; set; } // varchar(2000)
+		/// <summary>
+		/// 返回参数
+		/// </summary>
+		[Column(),                       Nullable         ] public string    RESPONSE         { get; set; } // varchar(2000)
+		[Column(),                       Nullable         ] public string    ACTION           { get; set; } // varchar(2000)
+		[Column(),                       Nullable         ] public string    REQUEST          { get; set; } // varchar(2000)
+	}
+
+	[Table("ORDER_DETAIL")]
 	public partial class OrderDetail
 	{
+		/// <summary>
+		/// 数据行?ID?号
+		/// </summary>
 		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		/// <summary>
+		/// 创建数据行的时间
+		/// </summary>
 		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		/// <summary>
+		/// 创建人
+		/// </summary>
 		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		/// <summary>
+		/// 更新数据行的时间
+		/// </summary>
 		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		/// <summary>
+		/// 更新数据行的用户
+		/// </summary>
 		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		/// <summary>
+		/// 可用状态
+		/// </summary>
 		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
+		/// <summary>
+		/// 下单人
+		/// </summary>
 		[Column("USER_ORDER"),           Nullable         ] public string    UserOrder        { get; set; } // varchar(80)
+		/// <summary>
+		/// 订单表
+		/// </summary>
 		[Column("PRRENT_ORDER_ID"),      Nullable         ] public string    PrrentOrderId    { get; set; } // varchar(80)
 	}
 
-	[Table(Schema="dbo", Name="ORDER_DETAIL_FOOD")]
+	[Table("ORDER_DETAIL_FOOD")]
 	public partial class OrderDetailFood
 	{
+		/// <summary>
+		/// 数据行?ID?号
+		/// </summary>
 		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		/// <summary>
+		/// 创建数据行的时间
+		/// </summary>
 		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		/// <summary>
+		/// 创建人
+		/// </summary>
 		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		/// <summary>
+		/// 更新数据行的时间
+		/// </summary>
 		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		/// <summary>
+		/// 更新数据行的用户
+		/// </summary>
 		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		/// <summary>
+		/// 可用状态
+		/// </summary>
 		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
+		/// <summary>
+		/// 下单人
+		/// </summary>
 		[Column("USER_ORDER"),           Nullable         ] public string    UserOrder        { get; set; } // varchar(80)
+		/// <summary>
+		/// 订单表
+		/// </summary>
 		[Column("ORDER_DETAIL_ID"),      Nullable         ] public string    OrderDetailId    { get; set; } // varchar(80)
+		/// <summary>
+		/// 具体商品ID
+		/// </summary>
 		[Column("FOOD_DETAIL_ID"),       Nullable         ] public string    FoodDetailId     { get; set; } // varchar(80)
-		[Column(),                       Nullable         ] public decimal?  QTY              { get; set; } // decimal(18, 0)
+		/// <summary>
+		/// 数量
+		/// </summary>
+		[Column(),                       Nullable         ] public decimal?  QTY              { get; set; } // decimal(18,0)
+		[Column("FOOD_DETAIL_NAME"),     Nullable         ] public string    FoodDetailName   { get; set; } // varchar(80)
+		[Column(),                                 NotNull] public decimal   PRICE            { get; set; } // decimal(18,0)
+		[Column(),                       Nullable         ] public string    URL              { get; set; } // varchar(80)
 	}
 
-	[Table(Schema="dbo", Name="ORDER_HEAD")]
+	[Table("ORDER_HEAD")]
 	public partial class OrderHead
 	{
+		/// <summary>
+		/// 数据行?ID?号
+		/// </summary>
 		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		/// <summary>
+		/// 创建数据行的时间
+		/// </summary>
 		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		/// <summary>
+		/// 创建人
+		/// </summary>
 		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		/// <summary>
+		/// 更新数据行的时间
+		/// </summary>
 		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		/// <summary>
+		/// 更新数据行的用户
+		/// </summary>
 		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		/// <summary>
+		/// 可用状态
+		/// </summary>
 		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
+		/// <summary>
+		/// 店铺ID
+		/// </summary>
 		[Column("SHOP_ID"),              Nullable         ] public string    ShopId           { get; set; } // varchar(80)
+		/// <summary>
+		/// 桌号
+		/// </summary>
 		[Column("DESC_NUM"),             Nullable         ] public string    DescNum          { get; set; } // varchar(80)
+		/// <summary>
+		/// 订单是否关闭
+		/// </summary>
 		[Column("IS_CLOSE"),             Nullable         ] public char?     IsClose          { get; set; } // char(1)
+		/// <summary>
+		/// 是否打印
+		/// </summary>
 		[Column("IS_PRINT"),             Nullable         ] public char?     IsPrint          { get; set; } // char(1)
-		[Column("PERSON_NUM"),           Nullable         ] public decimal?  PersonNum        { get; set; } // decimal(18, 0)
+		/// <summary>
+		/// 人数
+		/// </summary>
+		[Column("PERSON_NUM"),           Nullable         ] public decimal?  PersonNum        { get; set; } // decimal(18,0)
+		/// <summary>
+		/// 备注
+		/// </summary>
+		[Column(),                       Nullable         ] public string    MEMO             { get; set; } // varchar(200)
+		[Column(),                       Nullable         ] public string    TEL              { get; set; } // varchar(200)
+		[Column("CUSTOM_NAME"),          Nullable         ] public string    CustomName       { get; set; } // varchar(200)
+		[Column(),                                 NotNull] public decimal   COST             { get; set; } // decimal(18,0)
 	}
 
-	[Table(Schema="dbo", Name="SHOP")]
+	[Table("SHOP")]
 	public partial class SHOP
 	{
-		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
-		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
-		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
-		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
-		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
-		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
-		[Column(),                       Nullable         ] public string    NAME             { get; set; } // varchar(80)
-		[Column(),                       Nullable         ] public string    ADDRESS          { get; set; } // varchar(80)
-		[Column(),                       Nullable         ] public string    ACCOUNT          { get; set; } // varchar(80)
-		[Column(),                       Nullable         ] public string    PASSWORD         { get; set; } // varchar(80)
-		[Column(),                       Nullable         ] public string    TEL              { get; set; } // varchar(80)
-		[Column("IS_ADMIN"),             Nullable         ] public string    IsAdmin          { get; set; } // varchar(10)
+		/// <summary>
+		/// 数据行?ID?号
+		/// </summary>
+		[Column(),                     PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		/// <summary>
+		/// 创建数据行的时间
+		/// </summary>
+		[Column("DATETIME_CREATED"),                NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		/// <summary>
+		/// 创建人
+		/// </summary>
+		[Column("USER_CREATED"),                    NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		/// <summary>
+		/// 更新数据行的时间
+		/// </summary>
+		[Column("DATETIME_MODIFIED"),     Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		/// <summary>
+		/// 更新数据行的用户
+		/// </summary>
+		[Column("USER_MODIFIED"),         Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		/// <summary>
+		/// 可用状态
+		/// </summary>
+		[Column(),                                  NotNull] public char      STATE            { get; set; } // char(1)
+		/// <summary>
+		/// 店铺名称
+		/// </summary>
+		[Column(),                        Nullable         ] public string    NAME             { get; set; } // varchar(80)
+		/// <summary>
+		/// 地址
+		/// </summary>
+		[Column(),                        Nullable         ] public string    ADDRESS          { get; set; } // varchar(80)
+		/// <summary>
+		/// 账号
+		/// </summary>
+		[Column(),                        Nullable         ] public string    ACCOUNT          { get; set; } // varchar(80)
+		/// <summary>
+		/// 密码
+		/// </summary>
+		[Column(),                        Nullable         ] public string    PASSWORD         { get; set; } // varchar(80)
+		/// <summary>
+		/// 联系方式
+		/// </summary>
+		[Column(),                        Nullable         ] public string    TEL              { get; set; } // varchar(80)
+		/// <summary>
+		/// 是否管理员
+		/// </summary>
+		[Column("IS_ADMIN"),              Nullable         ] public string    IsAdmin          { get; set; } // varchar(10)
+		/// <summary>
+		/// 打印机名
+		/// </summary>
+		[Column("PRINTER_CODE"),          Nullable         ] public string    PrinterCode      { get; set; } // varchar(80)
+		/// <summary>
+		/// 茶位
+		/// </summary>
+		[Column(),                        Nullable         ] public string    CAPITATION       { get; set; } // varchar(80)
+		[Column(),                                  NotNull] public decimal   COST             { get; set; } // decimal(18,0)
+		[Column("IS_SHOW_MEMO"),                    NotNull] public char      IsShowMemo       { get; set; } // char(1)
+		[Column("IS_SHOW_USER_COUNT"),              NotNull] public char      IsShowUserCount  { get; set; } // char(1)
 	}
 
-	[Table(Schema="dbo", Name="SHOP_DESK")]
+	[Table("SHOP_DESK")]
 	public partial class ShopDesk
 	{
+		/// <summary>
+		/// 数据行?ID?号
+		/// </summary>
 		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		/// <summary>
+		/// 创建数据行的时间
+		/// </summary>
 		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		/// <summary>
+		/// 创建人
+		/// </summary>
 		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		/// <summary>
+		/// 更新数据行的时间
+		/// </summary>
 		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		/// <summary>
+		/// 更新数据行的用户
+		/// </summary>
 		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		/// <summary>
+		/// 可用状态
+		/// </summary>
 		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
+		/// <summary>
+		/// 店铺ID
+		/// </summary>
 		[Column("SHOP_ID"),              Nullable         ] public string    ShopId           { get; set; } // varchar(80)
+		/// <summary>
+		/// 桌号
+		/// </summary>
 		[Column("DESK_COUNT"),           Nullable         ] public string    DeskCount        { get; set; } // varchar(80)
+		/// <summary>
+		/// 桌描述
+		/// </summary>
 		[Column("DESC_DESC"),            Nullable         ] public string    DescDesc         { get; set; } // varchar(80)
 	}
 
-	[Table(Schema="dbo", Name="TEST")]
-	public partial class TEST
+	[Table("SYS_PARAM")]
+	public partial class SysParam
 	{
-		[Column, Nullable] public string ID  { get; set; } // nchar(10)
-		[Column, Nullable] public string WWW { get; set; } // nchar(10)
-		[Column, Nullable] public string EEE { get; set; } // nchar(10)
+		/// <summary>
+		/// 数据行?ID?号
+		/// </summary>
+		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		/// <summary>
+		/// 创建数据行的时间
+		/// </summary>
+		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		/// <summary>
+		/// 创建人
+		/// </summary>
+		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		/// <summary>
+		/// 更新数据行的时间
+		/// </summary>
+		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		/// <summary>
+		/// 更新数据行的用户
+		/// </summary>
+		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		/// <summary>
+		/// 可用状态
+		/// </summary>
+		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
+		/// <summary>
+		/// 参数名称
+		/// </summary>
+		[Column("PARAM_NAME"),           Nullable         ] public string    ParamName        { get; set; } // varchar(240)
+		/// <summary>
+		/// 店铺ID
+		/// </summary>
+		[Column("SHOP_NAME"),            Nullable         ] public string    ShopName         { get; set; } // varchar(80)
+		/// <summary>
+		/// 店铺ID
+		/// </summary>
+		[Column("SHOP_ID"),              Nullable         ] public string    ShopId           { get; set; } // varchar(80)
+	}
+
+	[Table("SYS_PARAM_VALUE")]
+	public partial class SysParamValue
+	{
+		/// <summary>
+		/// 数据行?ID?号
+		/// </summary>
+		[Column(),                    PrimaryKey,  NotNull] public string    ID               { get; set; } // varchar(80)
+		/// <summary>
+		/// 创建数据行的时间
+		/// </summary>
+		[Column("DATETIME_CREATED"),               NotNull] public DateTime  DatetimeCreated  { get; set; } // datetime
+		/// <summary>
+		/// 创建人
+		/// </summary>
+		[Column("USER_CREATED"),                   NotNull] public string    UserCreated      { get; set; } // varchar(80)
+		/// <summary>
+		/// 更新数据行的时间
+		/// </summary>
+		[Column("DATETIME_MODIFIED"),    Nullable         ] public DateTime? DatetimeModified { get; set; } // datetime
+		/// <summary>
+		/// 更新数据行的用户
+		/// </summary>
+		[Column("USER_MODIFIED"),        Nullable         ] public string    UserModified     { get; set; } // varchar(80)
+		/// <summary>
+		/// 可用状态
+		/// </summary>
+		[Column(),                                 NotNull] public char      STATE            { get; set; } // char(1)
+		/// <summary>
+		/// 参数值
+		/// </summary>
+		[Column("PARAM_VALUE"),          Nullable         ] public string    ParamValue       { get; set; } // varchar(2000)
+		/// <summary>
+		/// 参数名称
+		/// </summary>
+		[Column("PARAM_NAME"),           Nullable         ] public string    ParamName        { get; set; } // varchar(240)
+		/// <summary>
+		/// 店铺
+		/// </summary>
+		[Column("SHOP_ID"),              Nullable         ] public string    ShopId           { get; set; } // varchar(80)
+		/// <summary>
+		/// 店铺ID
+		/// </summary>
+		[Column("PARAM_NAME_ID"),        Nullable         ] public string    ParamNameId      { get; set; } // varchar(80)
 	}
 
 	public static partial class TableExtensions
@@ -210,6 +643,12 @@ namespace OrderApi
 		}
 
 		public static IMAGE Find(this ITable<IMAGE> table, string ID)
+		{
+			return table.FirstOrDefault(t =>
+				t.ID == ID);
+		}
+
+		public static LOG Find(this ITable<LOG> table, string ID)
 		{
 			return table.FirstOrDefault(t =>
 				t.ID == ID);
@@ -244,7 +683,18 @@ namespace OrderApi
 			return table.FirstOrDefault(t =>
 				t.ID == ID);
 		}
+
+		public static SysParam Find(this ITable<SysParam> table, string ID)
+		{
+			return table.FirstOrDefault(t =>
+				t.ID == ID);
+		}
+
+		public static SysParamValue Find(this ITable<SysParamValue> table, string ID)
+		{
+			return table.FirstOrDefault(t =>
+				t.ID == ID);
+		}
 	}
 }
 
-#pragma warning restore 1591

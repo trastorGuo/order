@@ -1,4 +1,5 @@
-﻿using LinqToDB;
+﻿using DataModels;
+using LinqToDB;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -342,7 +343,7 @@ namespace OrderApi.Controllers
                                 COST = order.COST,
                                 ORDER_ID = order.ID,
                                 FOOD_NAME = food.FoodDetailName,
-                                PRICE = food.Price,
+                                PRICE = food.PRICE,
                                 food.QTY,
                                 PERSON_NUM = order.PersonNum
                             };

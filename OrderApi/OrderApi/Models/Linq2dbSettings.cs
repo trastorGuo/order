@@ -7,7 +7,7 @@ namespace OrderApi
 {
     public class Linq2dbSettings : ILinqToDBSettings
     {
-        private const string msDefaultProviderName = "SqlServer";
+        private const string msDefaultProviderName = "MySql";
         public readonly IConnectionStringSettings mConnectionStringSettings;
         public Linq2dbSettings(IConfiguration configuration)
         {
@@ -38,7 +38,7 @@ namespace OrderApi
 
         public string DefaultConfiguration => mConnectionStringSettings.Name;
 
-        public string DefaultDataProvider => "SqlServer";
+        public string DefaultDataProvider => "MySql";
 
         public IEnumerable<IConnectionStringSettings> ConnectionStrings
         {

@@ -1,4 +1,5 @@
-﻿using LinqToDB;
+﻿using DataModels;
+using LinqToDB;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OrderApi.Models;
@@ -36,7 +37,7 @@ namespace OrderApi.Domains
                                  TYPE_ID = type.ID,
                                  type.ICON,
                                  type.TypeName,
-                                 SEQ = type == null ? (int?)(null) : type.SEQ,
+                                 SEQ = type == null ? (int?)(null) : (int?)type.SEQ,
                                  FOOD_ID = food.ID,
                                  food.NAME,
                                  FOOD_IMG_URL = foodImg.URL,
@@ -489,7 +490,7 @@ namespace OrderApi.Domains
                         model.OrderId = head.ID;
                     }
 
-                    var orderDetail = new OrderDetail()
+                    var orderDetail = new DataModels.OrderDetail()
                     {
                         ID = Guid.NewGuid().ToString("N").ToUpper(),
                         DatetimeCreated = DateTime.Now,
@@ -529,7 +530,7 @@ namespace OrderApi.Domains
                             OrderDetailId = orderDetail.ID,
                             FoodDetailName = string.IsNullOrEmpty(detailName.NAME) ? food.NAME : food.NAME + "(" + detailName.NAME + ")",
                             QTY = item.NUM,
-                            Price = detailName.PRICE ?? 0,
+                            PRICE = detailName.PRICE ?? 0,
                             URL = string.Join(";", urls.Select(x=>x.URL))
                         };
                         db.Insert(foodDetail);
@@ -596,7 +597,7 @@ namespace OrderApi.Domains
                                  food.QTY,
                                  USER_ORDER = food.UserOrder,
                                  FOOD_DETAIL_NAME = food.FoodDetailName,
-                                 PRICE = food.Price,
+                                 PRICE = food.PRICE,
                                  food.URL,
                                  CUSTOM_NAME = order.CustomName,
                                  order.TEL,
@@ -802,7 +803,7 @@ namespace OrderApi.Domains
                              DETAIL_ID = food.ID,
                              DETAIL_NAME = food.FoodDetailName,
                              NUM = food.QTY,
-                             PRICE = food.Price
+                             PRICE = food.PRICE
                          };
 
                 var model = rs.AsEnumerable().GroupBy(x => new { x.Account, x.User, x.OrderId, x.DescNum, x.PersonNum })
