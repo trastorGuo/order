@@ -37,7 +37,7 @@ function http(method, url, param) {
   const config = {
     url: url,
     method: method,
-    baseURL: 'http://www.trastor.cn:4396',
+    baseURL: 'http://thankful.top:7700/',
     timeout: 30000,
   };
   if (method === 'post') {
